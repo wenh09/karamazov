@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卡拉马佐夫兄弟 · 视觉小说</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231a2333'/><text x='16' y='22' font-size='18' fill='%23e8dcc0' text-anchor='middle'>全</text></svg>">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+ --panel:rgba(16,20,30,.90); --panel2:rgba(20,26,38,.96);
+ --trim:#b89a5e; --trim-soft:#8a7444;
+ --ink:#ece3cd; --ink-dim:#b6ac94; --ink-faint:#7e7663;
+ --line:rgba(184,154,94,.45);
+ --serif:"Noto Serif SC","Songti SC",serif; --latin:"EB Garamond",Georgia,serif;
+ --tap:44px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--serif);background:#0c0f16;color:var(--ink);line-height:1.7;-webkit-tap-highlight-color:transparent;}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+#app{position:fixed;inset:0;overflow:hidden;}
+
+/* ===== 舞台：场景图 cover 铺满 ===== */
+#bgLayer{position:absolute;inset:0;}
+#bgLayer .bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;display:none;}
+#bgLayer .bg-img.on{display:block;}
+#bgLayer .port-img{display:none;}
+/* 闪回/梦境/诗中幻象：滤镜 */
+#app.flashback #bgLayer .bg-img.on{filter:sepia(.5) saturate(.7) brightness(.85);}
+#app.dream #bgLayer .bg-img.on{filter:hue-rotate(200deg) saturate(.5) brightness(.8);}
+#app.vision #bgLayer .bg-img.on{filter:contrast(1.15) saturate(.6) brightness(.75);}
+/* 上下压暗，保证对话框可读 */
+#bgScrim{position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(to bottom,rgba(8,10,16,.55) 0%,rgba(8,10,16,0) 22%,rgba(8,10,16,0) 60%,rgba(8,10,16,.55) 100%);}
+
+/* ===== 顶部：地点牌 + 模式角标 ===== */
+#topBar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;z-index:6;pointer-events:none;}
+#badge{background:rgba(12,15,23,.82);border:1px solid var(--line);padding:7px 14px;font-size:13.5px;color:#f0e6cf;letter-spacing:.05em;line-height:1.45;text-shadow:0 1px 2px #000;}
+#badge .sceneMood{font-size:11.5px;color:#cfc4a6;margin-top:2px;text-shadow:0 1px 2px #000;}
+#modeTag{display:none;background:var(--panel2);border:1px solid var(--line);padding:5px 12px;font-size:12px;letter-spacing:.1em;}
+#modeTag.on{display:block;}
+#modeTag.f{border-color:#b89a5e;color:#d8c08a;}
+#modeTag.d{border-color:#6f86b8;color:#a9bce0;}
+#modeTag.v{border-color:#9a6fb0;color:#cfb0e0;}
+
+/* ===== 右上按钮 ===== */
+#topBtns{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:7;pointer-events:auto;}
+.tbtn{min-width:var(--tap);min-height:var(--tap);display:inline-flex;align-items:center;justify-content:center;
+ background:var(--panel);border:1px solid var(--line);color:var(--ink-dim);font-size:12px;letter-spacing:.05em;}
+.tbtn:hover{color:var(--ink);border-color:var(--trim);}
+.tbtn.on{color:var(--trim);border-color:var(--trim);}
+.newDot{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#d97757;opacity:0;}
+#peopleBtn{position:relative;}#peopleBtn.hasNew .newDot{opacity:1;}
+
+/* ===== 底部对话框 ===== */
+#dialogDock{position:absolute;left:0;right:0;bottom:0;min-height:26vh;max-height:38vh;
+ background:linear-gradient(180deg,rgba(16,20,30,.86),rgba(12,15,23,.96));
+ border-top:1px solid var(--trim);padding:34px 22px 14px;z-index:5;display:flex;flex-direction:column;}
+/* 精致角饰 */
+#dialogDock::before,#dialogDock::after{content:"";position:absolute;top:-1px;width:60px;height:1px;background:var(--trim);}
+#dialogDock::before{left:0;}#dialogDock::after{right:0;}
+/* 说话人大头像：压在对话框左上 */
+#focus{position:absolute;left:18px;top:-70px;display:flex;gap:10px;align-items:flex-end;z-index:2;}
+#focus.narrative,#focus.solo.narr{display:none;}
+#dialogDock.nofocus #focus{display:none;}
+#focus .fp{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+#focus .ava{width:88px;height:118px;overflow:hidden;border:2px solid var(--trim);background:#111622;position:relative;}
+#focus .ava img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block;}
+#focus .ava .ini{font-size:26px;color:var(--ink-dim);height:100%;display:flex;align-items:center;justify-content:center;}
+#focus .ava .first{position:absolute;left:0;right:0;bottom:0;background:#7a4a2b;color:#fff;font-size:10px;text-align:center;padding:1px 0;}
+#focus .fp.target .ava{width:56px;height:76px;opacity:.75;}
+#focus .fp .nm{display:none;}
+#focus .fp.target{opacity:.9;}
+#focus .relTag{display:none;}
+
+/* 名字牌：从对话框左上伸出 */
+#nameplate{position:absolute;left:18px;top:-20px;background:var(--panel2);border:1px solid var(--trim);
+ padding:3px 16px;font-size:14px;letter-spacing:.08em;color:var(--trim);z-index:3;white-space:nowrap;}
+#nameplate #name{font-weight:600;}
+#nameplate #name.narr{color:var(--ink-faint);font-weight:400;}
+#nameplate .tgtline{display:block;font-size:10.5px;color:var(--ink-dim);font-weight:400;letter-spacing:.03em;}
+
+/* 正文区 */
+#dlg{position:relative;flex:1;overflow-y:auto;padding-right:6px;}
+#dlg.narr #text{color:var(--ink);text-align:center;max-width:46em;margin:0 auto;}
+#leadNarr,#tailNarr{font-size:12.5px;color:var(--ink-dim);line-height:1.7;}
+#leadNarr:empty,#tailNarr:empty{display:none;}
+#text{font-size:17.5px;line-height:1.95;letter-spacing:.02em;color:var(--ink);}
+#dlg.narr #text{font-size:16px;color:var(--ink-dim);}
+#next{position:absolute;right:8px;bottom:-2px;font-size:16px;color:var(--trim);animation:blink 1s steps(2) infinite;}
+@keyframes blink{50%{opacity:.15;}}
+
+/* ===== 底部按钮条 ===== */
+#btnBar{position:absolute;right:10px;bottom:calc(min-height:26vh + 8px);display:flex;flex-direction:column;gap:5px;z-index:8;}
+#btnBar button{min-width:var(--tap);min-height:var(--tap);background:var(--panel);border:1px solid var(--line);
+ color:var(--ink-dim);font-size:11px;line-height:1.1;padding:2px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#btnBar button:hover{color:var(--trim);border-color:var(--trim);}
+#btnBar button.on{color:var(--trim);border-color:var(--trim);}
+#btnBar button:disabled{opacity:.3;}
+
+/* 进度条 */
+#prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08);z-index:9;}
+#prog .fill{height:100%;width:0;background:var(--trim);}
+
+/* ===== 浮层 ===== */
+.ov{position:absolute;inset:0;z-index:30;background:rgba(8,10,16,.96);display:none;overflow:auto;padding:30px 18px;}
+.ov.open{display:block;}
+.closex{position:absolute;top:14px;right:16px;min-width:var(--tap);min-height:var(--tap);font-size:20px;color:var(--ink-dim);z-index:5;}
+.closex:hover{color:var(--trim);}
+.card{max-width:880px;margin:0 auto;color:var(--ink);}
+.card h1{font-size:38px;font-weight:900;letter-spacing:.18em;text-align:center;margin-bottom:10px;}
+.card h2{font-size:24px;letter-spacing:.1em;margin-bottom:14px;border-left:3px solid var(--trim);padding-left:10px;}
+.card .sub{font-size:13px;color:var(--ink-dim);line-height:1.8;text-align:center;margin-bottom:18px;}
+.card .note{font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:1.7;border-top:1px solid var(--line);padding-top:10px;}
+.btn{display:inline-block;min-height:var(--tap);padding:0 22px;background:none;border:1px solid var(--line);color:var(--ink);font-size:15px;letter-spacing:.05em;}
+.btn:hover{border-color:var(--trim);color:var(--trim);}
+
+/* 标题菜单 */
+#entryOv{display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(10,13,20,.35),rgba(6,8,12,.78));}
+#entryOv.open{display:flex;}
+#entryOv .card{text-align:center;}
+#entryOv .row{display:flex;flex-direction:column;gap:12px;align-items:center;margin:24px 0;}
+#entryOv .btn{width:240px;}
+
+/* 回顾 */
+.logItem{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink-dim);line-height:1.8;}
+.logItem b{color:var(--trim);font-weight:600;margin-right:8px;}
+
+/* 图鉴 */
+#codexSub{font-size:12px;color:var(--ink-faint);margin-bottom:10px;}
+.pTabs{display:flex;gap:22px;margin-bottom:14px;border-bottom:1px solid var(--line);}
+.pTab{font-size:15px;color:var(--ink-faint);padding:8px 2px;border-bottom:2px solid transparent;}
+.pTab.on{color:var(--trim);border-bottom-color:var(--trim);}
+.sec{font-size:12px;color:var(--ink-faint);letter-spacing:.1em;margin:14px 0 6px;}
+#codexList{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;}
+#codexList .cx{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);cursor:pointer;}
+#codexList .cx:hover{border-color:var(--trim);}
+#codexList .cx.locked{opacity:.45;}
+#codexList .cx img{width:100%;height:130px;object-fit:cover;object-position:50% 15%;background:#111622;}
+#codexList .cx .ci h3{font-size:14px;font-weight:600;}
+#codexList .cx .ci p{font-size:11.5px;color:var(--ink-dim);line-height:1.5;}
+#codexList .cx .ci .lk{font-size:11px;color:var(--ink-faint);}
+/* 人物详情 */
+#charDetail{display:none;}
+#charDetail.open{display:block;}
+#codexGridMode{display:block;}
+#codexGridMode.off{display:none;}
+.cdHead{display:flex;gap:18px;align-items:flex-start;margin-bottom:14px;}
+.cdHead img{width:120px;height:160px;object-fit:cover;object-position:50% 15%;border:2px solid var(--trim);background:#111622;}
+.cdHead .cdInfo h2{border:0;padding:0;margin-bottom:6px;}
+.cdRel{display:block;width:100%;text-align:left;padding:8px 0;border-bottom:1px solid var(--line);color:var(--ink-dim);font-size:13px;}
+.cdRel:hover{color:var(--trim);}
+
+/* 章节 */
+.arcItem{padding:12px 0;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:10px;cursor:pointer;}
+.arcItem:hover{color:var(--trim);}
+.arcItem.locked{opacity:.4;cursor:default;}
+.arcItem.cur{color:var(--trim);}
+.arcItem h3{font-size:16px;font-weight:400;}
+.arcItem .ab{font-size:12px;color:var(--ink-faint);}
+
+/* 存档位 */
+#saveSlots{display:flex;flex-direction:column;gap:12px;}
+.slot{display:flex;gap:14px;border:1px solid var(--line);padding:10px;cursor:pointer;align-items:stretch;}
+.slot:hover{border-color:var(--trim);}
+.slot img{width:120px;height:70px;object-fit:cover;background:#111622;flex:none;}
+.slot .si{flex:1;}
+.slot .si h4{font-size:14px;color:var(--trim);margin-bottom:4px;}
+.slot .si p{font-size:12px;color:var(--ink-dim);line-height:1.6;}
+.slot .empty{color:var(--ink-faint);font-size:13px;align-self:center;}
+
+/* 关系图：辐射 */
+#mapWrap{display:flex;flex-direction:column;gap:10px;}
+#mapFilters{display:flex;gap:14px;flex-wrap:wrap;}
+.mapFilter{font-size:12px;color:var(--ink-faint);padding:4px 0;border-bottom:1px solid transparent;}
+.mapFilter.on{color:var(--trim);border-bottom:1px solid var(--trim);}
+#relationMap{position:relative;width:100%;height:520px;background:rgba(255,255,255,.02);border:1px solid var(--line);}
+#relationMap svg{width:100%;height:100%;}
+.mapNode .ring{fill:var(--panel2);stroke:var(--trim);stroke-width:1.5;}
+.mapNode.faded .ring{opacity:.25;}
+.mapNode.selected .ring{stroke:#e0b878;stroke-width:3;}
+.mapNode text{font-family:var(--serif);fill:var(--ink);font-size:13px;text-anchor:middle;}
+.mapNode.faded text{opacity:.3;}
+.mapEdge{fill:none;stroke-width:2;opacity:.7;}
+.mapEdge.focused{opacity:1;}
+.mapEmpty{padding:60px 0;text-align:center;color:var(--ink-faint);}
+#mapLegend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-faint);}
+#mapLegend i{display:inline-block;width:16px;height:2px;margin-right:5px;vertical-align:middle;background:var(--c);}
+#mapDetail{border-top:1px solid var(--line);padding-top:12px;}
+#mapDetail h3{font-size:18px;color:var(--trim);margin-bottom:6px;}
+#mapDetail p{font-size:13px;color:var(--ink-dim);line-height:1.6;margin-bottom:8px;}
+#mapDetail button{display:block;width:100%;text-align:left;font-size:13px;color:var(--ink-dim);padding:6px 0;border-bottom:1px solid var(--line);}
+#mapDetail button:hover{color:var(--trim);}
+#mapSub{font-size:12px;color:var(--ink-faint);}
+
+/* 场景标题过场 */
+#sceneCard{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+ background:rgba(6,8,12,.9);text-align:center;}
+#sceneCard.show{display:flex;}
+#sceneCardInner h2{font-size:30px;letter-spacing:.2em;color:var(--ink);}
+#sceneCardInner .scTime{font-size:14px;color:var(--trim);margin-top:8px;letter-spacing:.15em;}
+
+/* 竖屏手机：上画面下对话框 */
+@media (max-width:680px){
+ #dialogDock{min-height:34vh;padding:30px 14px 12px;}
+ #focus .ava{width:64px;height:86px;top:-50px;}
+ #focus .fp.target .ava{width:42px;height:58px;}
+ #text{font-size:15.5px;line-height:1.85;}
+ #btnBar{flex-direction:row;right:8px;left:8px;bottom:calc(34vh + 6px);justify-content:space-between;}
+ #btnBar button{min-width:0;flex:1;font-size:10px;}
+ #badge{font-size:11px;}
+ #codexList{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="bgLayer"><div id="bg">
+  <img class="bg-img" data-bg="scene-family" src="assets/comic/scene-family.jpg" alt="">
+  <img class="bg-img" data-bg="scene-estate" src="assets/comic/scene-estate.jpg" alt="">
+  <img class="bg-img" data-bg="scene-mentor" src="assets/comic/scene-mentor.jpg" alt="">
+  <img class="bg-img" data-bg="scene-arrival" src="assets/comic/scene-arrival.jpg" alt="">
+  <img class="bg-img" data-bg="scene-buffoon" src="assets/comic/scene-buffoon.jpg" alt="">
+  <img class="bg-img" data-bg="scene-women" src="assets/comic/scene-women.jpg" alt="">
+  <img class="bg-img" data-bg="scene-visitors" src="assets/comic/scene-visitors.jpg" alt="">
+  <img class="bg-img" data-bg="scene-lise" src="assets/comic/scene-lise.jpg" alt="">
+  <img class="bg-img" data-bg="scene-debate" src="assets/comic/scene-debate.jpg" alt="">
+  <img class="bg-img" data-bg="scene-conflict" src="assets/comic/scene-conflict.jpg" alt="">
+  <img class="bg-img" data-bg="scene-bow" src="assets/comic/scene-bow.jpg" alt="">
+  <img class="bg-img" data-bg="bg_cemetery_stone" src="assets/comic/full/bg_cemetery_stone.jpg" alt="">
+  <img class="bg-img" data-bg="bg_court_hall" src="assets/comic/full/bg_court_hall.jpg" alt="">
+  <img class="bg-img" data-bg="bg_garden_window_night" src="assets/comic/full/bg_garden_window_night.jpg" alt="">
+  <img class="bg-img" data-bg="bg_hospital_ward" src="assets/comic/full/bg_hospital_ward.jpg" alt="">
+  <img class="bg-img" data-bg="bg_investigation_room" src="assets/comic/full/bg_investigation_room.jpg" alt="">
+  <img class="bg-img" data-bg="bg_ivan_hotel_room" src="assets/comic/full/bg_ivan_hotel_room.jpg" alt="">
+  <img class="bg-img" data-bg="bg_katerina_lodging" src="assets/comic/full/bg_katerina_lodging.jpg" alt="">
+  <img class="bg-img" data-bg="bg_mokroye_tavern" src="assets/comic/full/bg_mokroye_tavern.jpg" alt="">
+  <img class="bg-img" data-bg="bg_smerdyakov_lodge" src="assets/comic/full/bg_smerdyakov_lodge.jpg" alt="">
+  <img class="bg-img" data-bg="bg_snegiryov_room" src="assets/comic/full/bg_snegiryov_room.jpg" alt="">
+  <img class="bg-img" data-bg="bg_child_hearth" src="assets/comic/full/bg_child_hearth.jpg" alt="">
+  <img class="bg-img" data-bg="bg_willow_night" src="assets/comic/full/bg_willow_night.jpg" alt="">
+  <img class="bg-img" data-bg="bg_grushenka_parlor" src="assets/comic/full/bg_grushenka_parlor.jpg" alt="">
+  <img class="bg-img" data-bg="bg_merchant_house" src="assets/comic/full/bg_merchant_house.jpg" alt="">
+  <img class="bg-img" data-bg="bg_road_night" src="assets/comic/full/bg_road_night.jpg" alt="">
+  <img class="bg-img on" data-bg="bg_bridge" src="assets/comic/full/bg_bridge.jpg" alt="">
+  <img class="bg-img" data-bg="bg_servant_lodge" src="assets/comic/full/bg_servant_lodge.jpg" alt="">
+  <img class="bg-img" data-bg="bg_schoolyard" src="assets/comic/full/bg_schoolyard.jpg" alt="">
+  <img class="bg-img" data-bg="bg_khlokolov_lise" src="assets/comic/full/bg_khlokolov_lise.jpg" alt="">
+  <img class="bg-img" data-bg="bg_quiet_tavern" src="assets/comic/full/bg_quiet_tavern.jpg" alt="">
+  <img class="bg-img" data-bg="bg_seville_dungeon" src="assets/comic/full/bg_seville_dungeon.jpg" alt="">
+  <img class="bg-img" data-bg="bg_kolya_street" src="assets/comic/full/bg_kolya_street.jpg" alt="">
+  <img class="port-img" data-p="fyodor" src="assets/comic/fyodor.jpg" alt="">
+  <img class="port-img" data-p="dmitri" src="assets/comic/dmitri.jpg" alt="">
+  <img class="port-img" data-p="ivan" src="assets/comic/ivan.jpg" alt="">
+  <img class="port-img" data-p="alyosha" src="assets/comic/alyosha.jpg" alt="">
+  <img class="port-img" data-p="zosima" src="assets/comic/zosima.jpg" alt="">
+  <img class="port-img" data-p="miusov" src="assets/comic/miusov.jpg" alt="">
+  <img class="port-img" data-p="khokhlakov" src="assets/comic/khokhlakov.jpg" alt="">
+  <img class="port-img" data-p="lise" src="assets/comic/lise.jpg" alt="">
+  <img class="port-img" data-p="katerina" src="assets/comic/full/katerina.jpg" alt="">
+  <img class="port-img" data-p="grushenka" src="assets/comic/full/grushenka.jpg" alt="">
+  <img class="port-img" data-p="smerdyakov" src="assets/comic/full/smerdyakov.jpg" alt="">
+  <img class="port-img" data-p="grigory" src="assets/comic/full/grigory.jpg" alt="">
+  <img class="port-img" data-p="rakitin" src="assets/comic/full/rakitin.jpg" alt="">
+  <img class="port-img" data-p="snegiryov" src="assets/comic/full/captain_snegiryov.jpg" alt="">
+  <img class="port-img" data-p="krassotkin" src="assets/comic/full/kolya.jpg" alt="">
+  <img class="port-img" data-p="kirillovitch" src="assets/comic/full/prosecutor_ippolit.jpg" alt="">
+  <img class="port-img" data-p="fetyukovitch" src="assets/comic/full/defense_fetyukovitch.jpg" alt="">
+  <img class="port-img" data-p="devil" src="assets/comic/full/devil_projection.jpg" alt="">
+  <img class="port-img" data-p="marfa" src="assets/comic/full/marfa.jpg" alt="">
+  <img class="port-img" data-p="ilyusha" src="assets/comic/full/ilyusha.jpg" alt="">
+  <img class="port-img" data-p="peasant" src="assets/comic/full/peasant.jpg" alt="">
+  <img class="port-img" data-p="perhotin" src="assets/comic/full/perhotin.jpg" alt="">
+  <img class="port-img" data-p="nikolay_parfenovitch" src="assets/comic/full/nikolay_parfenovitch.jpg" alt="">
+  <img class="port-img" data-p="librarian" src="assets/comic/full/librarian.jpg" alt="">
+  <img class="port-img" data-p="samsonov" src="assets/comic/full/samsonov.jpg" alt="">
+  <img class="port-img" data-p="maximov" src="assets/comic/full/maximov.jpg" alt="">
+  <img class="port-img" data-p="kalganov" src="assets/comic/full/kalganov.jpg" alt="">
+  </div></div>
+ <div id="bgScrim"></div>
+ <div id="bgBlur" hidden></div>
+
+ <div id="topBar">
+  <div id="badge"></div>
+  <div id="modeTag"></div>
+ </div>
+ <div id="topBtns">
+  <button class="tbtn" id="burger">菜单</button>
+ </div>
+
+ <div id="sceneCard"><div id="sceneCardInner"></div></div>
+
+ <main id="stage" style="position:absolute;inset:0;">
+  <div id="dialogDock">
+    <div id="focus"></div>
+    <div id="nameplate"><span id="name"></span><span class="tgtline" id="targetLine"></span></div>
+    <div id="dlg">
+      <div id="leadNarr"></div>
+      <div id="text"></div>
+      <div id="tailNarr"></div>
+      <div id="next">▼</div>
+    </div>
+  </div>
+ </main>
+
+ <div id="btnBar">
+  <button id="prevBtn" title="回退">回退</button>
+  <button id="autoBtn" title="自动">自动</button>
+  <button id="skipBtn" title="快进到下一场景">快进</button>
+  <button id="logBtn" title="回顾">回顾</button>
+  <button id="saveBtn" title="存档">存档</button>
+  <button id="loadBtn" title="读档">读档</button>
+  <button id="peopleBtn2" title="人物">人物</button>
+  <button id="progBtn" title="菜单">菜单</button>
+ </div>
+ <div id="prog"><div class="fill" id="progFill"></div></div>
+
+ <!-- 标题菜单 -->
+ <div class="ov open" id="entryOv"><div class="card">
+   <h1>卡拉马佐夫兄弟</h1>
+   <div class="sub">全剧视觉小说 · 预计约 <span id="totalMin">—</span><br>固定单主线 · 19 世纪俄国 · 点击画面或空格推进</div>
+   <div class="row">
+     <button class="btn" id="startBtn">开始游戏</button>
+     <button class="btn" id="continueBtn">继续</button>
+     <button class="btn" id="mLoadTitle">读档</button>
+     <button class="btn" id="mArcTitle">章节</button>
+     <button class="btn" id="mCodexTitle">人物</button>
+   </div>
+   <div class="note">对白依据原著情节改写，人物与场景资料随剧情逐步解锁。</div>
+ </div></div>
+
+ <!-- 菜单浮层 -->
+ <div class="ov" id="menuOv"><button class="closex" data-close="menuOv">×</button><div class="card">
+   <h2>菜单</h2><div id="menuProg" style="font-size:12px;color:var(--ink-faint);margin-bottom:12px"></div>
+   <div class="row" style="display:flex;flex-direction:column;gap:8px;">
+     <button class="btn" id="mResume">继续阅读</button>
+     <button class="btn" id="mAuto">自动播放</button>
+     <button class="btn" id="mLog">回顾</button>
+     <button class="btn" id="mCodex">人物图鉴</button>
+     <button class="btn" id="mMap">关系图</button>
+     <button class="btn" id="mArc">章节选择</button>
+     <button class="btn" id="mRestart">重开</button>
+   </div>
+ </div></div>
+
+ <!-- 存档/读档 -->
+ <div class="ov" id="saveOv"><button class="closex" data-close="saveOv">×</button><div class="card">
+   <h2 id="saveTitle">存档</h2><div id="saveSlots"></div>
+ </div></div>
+
+ <div class="ov" id="arcOv"><button class="closex" data-close="arcOv">×</button><div class="card"><h2>章节</h2><div id="arcList"></div></div></div>
+ <div class="ov" id="logOv"><button class="closex" data-close="logOv">×</button><div class="card"><h2>回顾</h2><div id="logList"></div></div></div>
+
+ <div class="ov" id="codexOv"><button class="closex" data-close="codexOv">×</button><div class="card">
+   <div class="pTabs"><button class="pTab on" data-tab="codex">人物图鉴</button><button class="pTab" data-tab="map">关系图</button></div>
+   <div id="codexSub"></div>
+   <div id="codexGridMode">
+     <div id="codexList"></div>
+   </div>
+   <div id="charDetail"></div>
+ </div></div>
+
+ <div class="ov" id="mapOv"><button class="closex" data-close="mapOv">×</button><div class="card">
+   <div class="pTabs"><button class="pTab" data-tab="codex2">人物图鉴</button><button class="pTab on" data-tab="map">关系图</button></div>
+   <div id="mapWrap">
+     <div id="mapSub"></div><div id="mapFilters"></div>
+     <div id="relationMap"></div><div id="mapLegend"></div>
+     <aside id="mapDetail"></aside>
+   </div>
+ </div></div>
+
+ <div class="ov" id="endOv"><div class="card" style="text-align:center">
+   <h1>（全书终）</h1><div class="sub">故事在此告一段落。</div>
+   <div class="row" style="justify-content:center;display:flex;gap:12px;"><button class="btn" id="endRestart">再读一遍</button></div>
+ </div></div>
+</div>
+
+<script>
+
+"use strict";
+var SAVE_KEY="karamazov_vn_full_v3", SAVE_VER=3;
+var BEATS=[{"id":"s1b1","sc":"s1","arc":"a1","bg":"place-s1","sp":"narrator","txt":"我们这小城当年有位破落地主，姓卡拉马佐夫，叫费奥多尔。他白手起家，靠钻营和吝啬，临了竟攒下十万卢布现金，却一辈子爱出丑。他结过两次婚。头一位太太跟人私奔，抛下三岁的米嘉，不久死在彼得堡。","lead":"","tail":"","rev":["fyodor"],"kn":"费奥多尔是故事的父亲。","cast":[],"srcIds":["s1b1","s1b2","s1b3"]},{"id":"s1b4","sc":"s1","arc":"a1","bg":"place-s1","sp":"narrator","txt":"第二位太太是个孤女，温顺怕事，也早早去了，留下两个更小的儿子。没有人把这三个孩子凑在一处养过；他们长大，也成了三个截然不同的人。三个儿子，他几乎一个都没放在心上。此刻，他一个人坐在空荡荡的宅子里。","lead":"","tail":"","rev":[],"kn":"次子、三子同样幼年丧母。","cast":[],"srcIds":["s1b4","s1b4b","s1b5"]},{"id":"s2b1","sc":"s2","arc":"a1","bg":"place-childhood","sp":"narrator","txt":"三岁的米嘉，是老仆人格里戈里抱回小屋，一勺一口喂大的。远亲米乌索夫从巴黎回来，顺口做了监护人，转头又把孩子忘了。米嘉辗转几户人家，进过军校，去过高加索，还为人决斗降过职。","lead":"","tail":"","rev":["dmitri"],"kn":"老仆抱他喂大，监护人转头把他忘了。","cast":["grigory"],"srcIds":["s2b1","s2b2","s2b3"]},{"id":"s2b4","sc":"s2","arc":"a1","bg":"place-s2","sp":"dmitri","txt":"这笔家产原是母亲留给我的，父亲，请把账算清楚！","lead":"","tail":"","rev":[],"kn":"他来自讨遗产。","cast":["dmitri","fyodor"],"srcIds":["s2b4"]},{"id":"s2b5","sc":"s2","arc":"a1","bg":"place-s2","sp":"fyodor","txt":"账目？这些年你领走的钱，早把你那份花光了。","lead":"","tail":"几张旧借据一摆，成年的米嘉竟像倒欠了父亲。这笔账，成了父子解不开的结。","rev":["fyodor"],"kn":"父亲不认账。","cast":["dmitri","fyodor"],"srcIds":["s2b5","s2b6"]},{"id":"s3b1","sc":"s3","arc":"a1","bg":"place-s3","sp":"narrator","txt":"二十岁的阿辽沙，是费奥多尔最小的儿子，如今在修道院做见习修士。他不是狂热分子，只是打心里爱人；让他留下的，是长老佐西马。","lead":"","tail":"","rev":["alyosha","zosima"],"kn":"阿辽沙是三幼子。","cast":["zosima","alyosha"],"srcIds":["s3b1","s3b2"]},{"id":"s3b3","sc":"s3","arc":"a1","bg":"place-s3","sp":"zosima","txt":"你这样的年轻人，心里是装着光的。","lead":"","tail":"父子正闹得不可开交，费奥多尔却半开玩笑说：不如都到长老屋里，借长老在场说和说和。","rev":[],"kn":"长老温和。","cast":["zosima","alyosha"],"srcIds":["s3b3","s3b4"]},{"id":"s3b5","sc":"s3","arc":"a1","bg":"place-s3","sp":"alyosha","txt":"父兄若肯坐下来谈，也许……还有转圜。","lead":"","tail":"自觉对父亲发过火的德米特里应了约；体弱的长老沉默片刻，点了头。","rev":[],"kn":"他盼和解。","cast":["zosima","alyosha"],"srcIds":["s3b5","s3b6"]},{"id":"s4b1","sc":"s4","arc":"a2","bg":"place-s4","sp":"narrator","txt":"会面日上午，礼拜刚过，约十一点半，米乌索夫先乘敞篷车到了。","lead":"","tail":"","rev":["miusov"],"kn":"米乌索夫是远亲、自由派。","cast":["kalganov","maximov","miusov"],"srcIds":["s4b1"]},{"id":"s4b2","sc":"s4","arc":"a2","bg":"place-s4","sp":"kalganov","txt":"彼得·亚历山德罗维奇……我到底要不要去国外念书呢。","lead":"","tail":"费奥多尔和伊万坐一辆旧马车，远远跟在后头；德米特里迟迟没有露面。几个人步行走到山门，竟没有一个出迎。图拉来的小地主马克西莫夫倒凑了上来。","rev":["kalganov"],"kn":"他是米乌索夫的年轻亲戚。","cast":["kalganov","maximov","miusov"],"srcIds":["s4b2","s4b3","s4b4"]},{"id":"s4b5","sc":"s4","arc":"a2","bg":"place-s4","sp":"maximov","txt":"往隐修所走？这路我熟，我带各位去。","lead":"","tail":"","rev":[],"kn":"","cast":["kalganov","maximov","miusov"],"srcIds":["s4b5"]},{"id":"s4b6","sc":"s4","arc":"a2","bg":"place-s4","sp":"miusov","txt":"我本想看看这地方的规矩，可别让我后悔跟他同行。","lead":"","tail":"","rev":[],"kn":"他嫌弃费奥多尔。","cast":["kalganov","maximov","miusov"],"srcIds":["s4b6"]},{"id":"s5b1","sc":"s5","arc":"a2","bg":"place-s5","sp":"narrator","txt":"众人进了修士室。长老由阿辽沙陪着，从内室慢慢出来。修士们叩地吻手；米乌索夫只敷衍一躬，费奥多尔立刻学他的样子，活像只猴子。墙上那只廉价的旧座钟，叮叮当当地敲了十二下。","lead":"","tail":"","rev":["zosima"],"kn":"长老身体孱弱。","cast":["zosima","alyosha"],"srcIds":["s5b1","s5b2","s5b3"]},{"id":"s5b4","sc":"s5","arc":"a2","bg":"place-s5","sp":"fyodor","txt":"说起来，我天生就是个丑角——且听我讲个当警察局长的笑话。","lead":"","tail":"","rev":[],"kn":"他抢话出丑。","cast":["fyodor","miusov"],"srcIds":["s5b4"]},{"id":"s5b5","sc":"s5","arc":"a2","bg":"place-s5","sp":"miusov","txt":"够了！你明知道那段狄德罗受洗的轶事，全是编的！","lead":"","tail":"","rev":[],"kn":"两人当场顶撞。","cast":["fyodor","miusov"],"srcIds":["s5b5"]},{"id":"s5b6","sc":"s5","arc":"a2","bg":"place-s5","sp":"fyodor","txt":"这……这我招，现编的，不就为了凑个趣嘛。","lead":"","tail":"阿辽沙垂着头，羞得快要落泪。德米特里，到这会儿还没到。","rev":[],"kn":"他自知在演。","cast":["fyodor","miusov"],"srcIds":["s5b6","s5b7"]},{"id":"s6b1","sc":"s6","arc":"a2","bg":"place-s6","sp":"narrator","txt":"长老走到门廊台阶上，披上圣带。阶下挤着二十来个农妇。一个被附身的女人被领上来，浑身抽搐。长老把圣带按上她额头，低声祈祷，她渐渐静了。","lead":"","tail":"","rev":["zosima"],"kn":"他先走向最卑微的人。","cast":["peasant","zosima"],"srcIds":["s6b1","s6b2"]},{"id":"s6b3","sc":"s6","arc":"a2","bg":"place-s6","sp":"peasant","txt":"长老……我那走了的孩子，您说句宽心话吧。","lead":"","tail":"","rev":[],"kn":"她来求安慰。","cast":["peasant","zosima"],"srcIds":["s6b3"]},{"id":"s6b4","sc":"s6","arc":"a2","bg":"place-s6","sp":"zosima","txt":"别哭。把心放软，祂看得见你的苦。","lead":"","tail":"阿辽沙侍立在长老身后，静静看着这一幕，心里又酸又暖。人群里有的哭，有的低声念着祷词；长老的手所到之处，人心渐渐安定。","rev":[],"kn":"长老体恤苦难。","cast":["peasant","zosima"],"srcIds":["s6b4","s6b5","s6b6"]},{"id":"s7b1","sc":"s7","arc":"a2","bg":"place-s7","sp":"narrator","txt":"门廊另一头，专为贵妇人隔开的地方，霍赫拉科娃夫人守着坐轮椅的女儿莉兹。","lead":"","tail":"","rev":["khokhlakov","lise"],"kn":"母女在此等候。","cast":["khokhlakov","zosima"],"srcIds":["s7b1"]},{"id":"s7b2","sc":"s7","arc":"a2","bg":"place-s7","sp":"khokhlakov","txt":"长老，我也爱人民，真的爱……可我这心里，总是不踏实。","lead":"","tail":"","rev":[],"kn":"她感伤而信心薄弱。","cast":["khokhlakov","zosima"],"srcIds":["s7b2"]},{"id":"s7b3","sc":"s7","arc":"a2","bg":"place-s7","sp":"zosima","txt":"先说说您女儿的近况吧。","lead":"","tail":"","rev":[],"kn":"","cast":["khokhlakov","zosima"],"srcIds":["s7b3"]},{"id":"s7b4","sc":"s7","arc":"a2","bg":"place-s7","sp":"khokhlakov","txt":"她的腿时好时坏。长老，我是个信心薄弱的人啊。","lead":"","tail":"轮椅上的莉兹安静坐着，一双大眼睛骨碌碌地转。长老静静听着，没有急着答话；门廊上一时只剩下母女俩的呼吸声。","rev":[],"kn":"莉兹半瘫。","cast":["khokhlakov","zosima"],"srcIds":["s7b4","s7b5","s7b6"]},{"id":"s8b1","sc":"s8","arc":"a2","bg":"place-s8","sp":"narrator","txt":"莉兹想撑起身子，合起手向长老致意，却忽然笑出了声。","lead":"","tail":"","rev":["lise"],"kn":"她突然失笑。","cast":["lise"],"srcIds":["s8b1"]},{"id":"s8b2","sc":"s8","arc":"a2","bg":"place-s8","sp":"lise","txt":"噗——你们看他，脸都红透了！","lead":"","tail":"她自己也笑得直不起腰，忙拿手背挡住脸，肩头直颤。","rev":["alyosha"],"kn":"她当众逗阿辽沙。","cast":["lise"],"srcIds":["s8b2","s8b3"]},{"id":"s8b4","sc":"s8","arc":"a2","bg":"place-s8","sp":"lise","txt":"给——卡捷琳娜·伊万诺芙娜让我递给你的，她说请你一定去一趟。","lead":"","tail":"阿辽沙接过那张便签，茫然站着，一时还没回过神。可不知怎的，这个爱笑的小姑娘，让阿辽沙心里莫名地一紧。","rev":[],"kn":"卡捷琳娜想见阿辽沙。","cast":["lise"],"srcIds":["s8b4","s8b5","s8b6"]},{"id":"s9b1","sc":"s9","arc":"a2","bg":"place-s9","sp":"narrator","txt":"长老离室约莫半小时，回来时，客人们正争得热闹。","lead":"","tail":"","rev":["zosima"],"kn":"辩论已展开。","cast":["librarian","ivan","zosima","fyodor"],"srcIds":["s9b1"]},{"id":"s9b2","sc":"s9","arc":"a2","bg":"place-s9","sp":"librarian","txt":"伊万先生写了篇文章，谈的是教会法庭的权限……","lead":"","tail":"","rev":[],"kn":"伊万写过神学文章。","cast":["librarian","ivan","zosima","fyodor"],"srcIds":["s9b2"]},{"id":"s9b3","sc":"s9","arc":"a2","bg":"place-s9","sp":"ivan","txt":"我是说，教会与国家两种原则，本就缠在一起，难分难解。","lead":"","tail":"","rev":["ivan"],"kn":"他理性而克制。","cast":["librarian","ivan","zosima","fyodor"],"srcIds":["s9b3"]},{"id":"s9b4","sc":"s9","arc":"a2","bg":"place-s9","sp":"zosima","txt":"这话有意思。那依你看，该当如何？","lead":"","tail":"米乌索夫几次想插话，都被晾在一边，脸色越来越沉。","rev":[],"kn":"长老认真倾听。","cast":["librarian","ivan","zosima","fyodor"],"srcIds":["s9b4","s9b5"]},{"id":"s9b6","sc":"s9","arc":"a2","bg":"place-s9","sp":"fyodor","txt":"你呀，不走到最后一个，是不肯罢休的。","lead":"","tail":"","rev":["fyodor"],"kn":"父亲专挑米乌索夫取乐。","cast":["librarian","ivan","zosima","fyodor"],"srcIds":["s9b6"]},{"id":"s10b1","sc":"s10","arc":"a2","bg":"place-s10","sp":"narrator","txt":"门终于开了。迟到的德米特里走进来，先向长老求了祝福。","lead":"","tail":"","rev":["dmitri"],"kn":"德米特里登场。","cast":["fyodor","dmitri"],"srcIds":["s10b1"]},{"id":"s10b2","sc":"s10","arc":"a2","bg":"place-s10","sp":"fyodor","txt":"各位请看——这是孝顺的卡尔·摩尔，那是不肖的弗兰茨·摩尔！","lead":"","tail":"满屋一静。米乌索夫又惊又怒，当众揭穿：做父亲的竟同自己儿子争一个女人，还撺掇着要把儿子送进班房。","rev":[],"kn":"他当众编排两个儿子。","cast":["fyodor","dmitri"],"srcIds":["s10b2","s10b3"]},{"id":"s10b4","sc":"s10","arc":"a2","bg":"place-s10","sp":"fyodor","txt":"要不是你是我亲生儿子，我这就跟你决斗——三步，枪顶着手帕！","lead":"","tail":"","rev":[],"kn":"父亲当众反咬、叫阵儿子。","cast":["fyodor","dmitri"],"srcIds":["s10b4"]},{"id":"s10b5","sc":"s10","arc":"a2","bg":"place-s10","sp":"dmitri","txt":"我本想回来奉养老父的……回来才看见一个荒唐小丑！这样的人，凭什么还活在世上？","lead":"","tail":"修士们连声喊着'可耻'，卡尔加诺夫涨红了脸。","rev":[],"kn":"父子当面撕破脸。","cast":["fyodor","dmitri"],"srcIds":["s10b5","s10b6","s10b7"]},{"id":"s11b1","sc":"s11","arc":"a2","bg":"place-s11","sp":"narrator","txt":"闹到不可开交的当口，一直沉默的长老忽然站了起来。他一步步走到德米特里面前，直直跪了下去，额头一直贴到地上。阿辽沙起先以为他是虚弱跌倒——却看清，这是郑重其事的一拜。","lead":"","tail":"","rev":["alyosha","dmitri","zosima"],"kn":"众人一怔。","cast":["zosima","dmitri"],"srcIds":["s11b1","s11b2","s11b3"]},{"id":"s11b4","sc":"s11","arc":"a2","bg":"place-s11","sp":"zosima","txt":"别了。诸位，都请原谅我。","lead":"","tail":"","rev":[],"kn":"他向众人告别。","cast":["zosima","dmitri"],"srcIds":["s11b4"]},{"id":"s11b5","sc":"s11","arc":"a2","bg":"place-s11","sp":"dmitri","txt":"德米特里愣住，半晌从牙缝里挤出一句：……上帝啊。","lead":"","tail":"德米特里忽然捂住脸，转身冲出门去。满屋宾客，也乱哄哄跟着退了出来。","rev":[],"kn":"他被这一拜击溃。","cast":["zosima","dmitri"],"srcIds":["s11b5","s11b6"]},{"id":"sa1b1","sc":"sa1","arc":"a2","bg":"place-monastery-refectory","sp":"narrator","txt":"伏地一拜之后，宾客们被请进院长食堂用素餐。米乌索夫憋了一肚子火，一心想找院长理论。","lead":"","tail":"","rev":["alyosha","fyodor","ivan","miusov"],"kn":"餐桌闹剧紧接伏地一拜之后。","cast":["miusov"],"srcIds":["sa1b1"]},{"id":"sa1b2","sc":"sa1","arc":"a2","bg":"place-monastery-refectory","sp":"miusov","txt":"恕我直言，贵院的规矩未免过于宽纵——听说连鱼肉都不禁？","lead":"","tail":"院长还未答，费奥多尔已抢着接话，把一句客套话演成了一场滑稽戏，满屋人或皱眉或掩笑。","rev":[],"kn":"他拿斋戒规矩开刀。","cast":["miusov"],"srcIds":["sa1b2","sa1b3"]},{"id":"sa1b4","sc":"sa1","arc":"a2","bg":"place-monastery-refectory","sp":"miusov","txt":"够了！这桌我吃不下去——告辞！","lead":"","tail":"一顿饭就此不欢而散。阿辽沙随长老回隐修所，心里明白：这座小城从此要被卡拉马佐夫家搅得天翻地覆。","rev":[],"kn":"米乌索夫愤然离席。","cast":["miusov"],"srcIds":["sa1b4","sa1b5"]},{"id":"sa2b1","sc":"sa2","arc":"a3","bg":"servant_lodge","sp":"narrator","txt":"费奥多尔的城宅远在城边，两层灰楼、红铁顶；夜里他总把仆人赶去下房，独自锁在楼里。下房里只住三个人：老仆人格里戈里、他妻子玛尔法，还有一个叫斯乜尔佳科夫的年轻厨子。城里早有闲话：这青年是当年那个冻死在围墙上的'臭丽萨薇塔'的儿子，父亲是谁，人人心里有数。","lead":"","tail":"","rev":["grigory","marfa","smerdyakov"],"kn":"这是父亲的家。","cast":["grigory"],"srcIds":["sa2b1","sa2b2","sa2b3"]},{"id":"sa2b4","sc":"sa2","arc":"a3","bg":"servant_lodge","sp":"grigory","txt":"本分就是本分。他再荒唐，也是我们的东家，守着便是。","lead":"","tail":"楼上，费奥多尔正就着白兰地盘问伊万；斯乜尔佳科夫端菜进出，耳朵却比谁都尖。","rev":[],"kn":"老仆以忠诚自守。","cast":["grigory"],"srcIds":["sa2b4","sa2b5"]},{"id":"sa3b1","sc":"sa3","arc":"a3","bg":"place-willow-night","sp":"narrator","txt":"德米特里从修道院冲出来后，半路截住弟弟阿辽沙，把他拉到一边，非要把压在心里的事一五一十倒出来。","lead":"","tail":"","rev":["alyosha","dmitri"],"kn":"米嘉对阿辽沙剖白。","cast":["dmitri","alyosha"],"srcIds":["sa3b1"]},{"id":"sa3b2","sc":"sa3","arc":"a3","bg":"place-willow-night","sp":"dmitri","txt":"我这人荒唐，可荒唐得也有分寸——有些脏事我宁可写诗，也不愿真做。当年我在部队里，遇上一位上校的女儿……我竟当众羞辱了她。","lead":"","tail":"他讲自己怎样把四千五百卢布送到她家门口、又怎样第二天清醒过来羞愧难当；姑娘反倒差人把找零送了回来，一个字没有。","rev":[],"kn":"他自称有底线。","cast":["dmitri","alyosha"],"srcIds":["sa3b2","sa3b3","sa3b4"]},{"id":"sa3b5","sc":"sa3","arc":"a3","bg":"place-willow-night","sp":"dmitri","txt":"后来她成了富家继承人，寄来钱、寄来信——她说：'嫁给我吧，我什么都听你的。'","lead":"","tail":"","rev":["katerina"],"kn":"卡捷琳娜主动许身。","cast":["dmitri","alyosha"],"srcIds":["sa3b5"]},{"id":"sa3b6","sc":"sa3","arc":"a3","bg":"place-willow-night","sp":"alyosha","txt":"那你为什么又……?","lead":"","tail":"","rev":[],"kn":"他不明白兄长为何变心。","cast":["dmitri","alyosha"],"srcIds":["sa3b6"]},{"id":"sa5b1","sc":"sa5","arc":"a3","bg":"place-grushenka-parlor","sp":"narrator","txt":"全城都知道：费奥多尔和他亲儿子德米特里，如今在争同一个女人——本地富孀格鲁申卡。费奥多尔已经备好三千卢布，只等她点头；德米特里也为这笔钱发疯，四处借钱、抵押。","lead":"","tail":"","rev":["fyodor","grushenka"],"kn":"父子同争一女。","cast":["fyodor","dmitri"],"srcIds":["sa5b1","sa5b2"]},{"id":"sa5b3","sc":"sa5","arc":"a3","bg":"place-grushenka-parlor","sp":"grushenka","txt":"你们爷俩呀，一个比一个可笑——我可还没拿定主意呢。","lead":"","tail":"米嘉闯进来，看见父亲也在，两人立刻剑拔弩张；格鲁申卡反倒起身离座，由着他们斗。阿辽沙站在门外，看见兄长攥拳、父亲龇牙，只觉得这家人的羞耻已到顶点。","rev":[],"kn":"她在两头钓。","cast":["grushenka"],"srcIds":["sa5b3","sa5b4","sa5b5"]},{"id":"sa4b1","sc":"sa4","arc":"a3","bg":"place-katerina-lodging","sp":"narrator","txt":"德米特里带阿辽沙去见卡捷琳娜·伊万诺芙娜。她在一位远亲家中作客，屋子素净、白窗帘。","lead":"","tail":"","rev":["alyosha","dmitri","katerina"],"kn":"正式会面。","cast":["katerina","dmitri"],"srcIds":["sa4b1"]},{"id":"sa4b2","sc":"sa4","arc":"a3","bg":"place-katerina-lodging","sp":"katerina","txt":"我听说您今天在修道院大闹了一场。我只问一句：您还打算把我当什么？","lead":"","tail":"","rev":[],"kn":"她高傲而受伤。","cast":["katerina","dmitri"],"srcIds":["sa4b2"]},{"id":"sa4b3","sc":"sa4","arc":"a3","bg":"place-katerina-lodging","sp":"dmitri","txt":"我……我对不起您。可我心里另有人了。","lead":"","tail":"卡捷琳娜没有立刻发作，反而从信封里抽出一大笔钞票，当着兄弟俩的面，把钱扔到米嘉脚边。","rev":[],"kn":"他当面承认变心。","cast":["katerina","dmitri"],"srcIds":["sa4b3","sa4b4"]},{"id":"sa4b5","sc":"sa4","arc":"a3","bg":"place-katerina-lodging","sp":"katerina","txt":"这是您当年那笔钱——现在，连本带利，还给您。","lead":"","tail":"米嘉脸色煞白，弯腰把钱拾起，又狠狠摔回给她；阿辽沙站在一旁，连气都不敢出。","rev":[],"kn":"她要以此割断关系。","cast":["katerina","dmitri"],"srcIds":["sa4b5","sa4b6"]},{"id":"sa6b1","sc":"sa6","arc":"a4","bg":"place-zosima-cell","sp":"narrator","txt":"次日天未亮，阿辽沙被人唤起——长老夜里很不舒服，想立刻领圣体、行终傅。帕伊西神父主持告解，修士们围拢；长老脸色疲倦，眼神却仍明亮，像在欢喜。隔壁破旧小室里，另一位老修士费拉邦特正对着墙角自语、连饭也不肯好好吃；有人说他是圣徒，有人说他是疯子。","lead":"","tail":"","rev":["alyosha","ferapont","paissy","zosima"],"kn":"长老病危。","cast":["zosima"],"srcIds":["sa6b1","sa6b2","sa6b3"]},{"id":"sa6b4","sc":"sa6","arc":"a4","bg":"place-zosima-cell","sp":"zosima","txt":"我讲了一辈子道，如今话到嘴边反而比缄默容易。","lead":"","tail":"阿辽沙跪在椅边，听长老断断续续地说，只觉得每一句都像在把他往后的路先铺好。","rev":[],"kn":"他要把一生的话留下。","cast":["zosima"],"srcIds":["sa6b4","sa6b5"]},{"id":"sa7b1","sc":"sa7","arc":"a4","bg":"snegiryov_room","sp":"narrator","txt":"卡捷琳娜托阿辽沙：悄悄去周济那个被米嘉当众揪着胡子拖过街的落魄上尉一家。阿辽沙摸进破屋：病弱的妻、几个面黄肌瘦的孩子，上尉斯涅吉辽夫窘迫得抬不起头。","lead":"","tail":"","rev":["ilyusha"],"kn":"孩子线由这桩当众之辱而起。","cast":["snegiryov","alyosha"],"srcIds":["sa7b1","sa7b2"]},{"id":"sa7b3","sc":"sa7","arc":"a4","bg":"snegiryov_room","sp":"snegiryov","txt":"上尉盯着那两张钞票，忽然一把攥住，又狠狠揉成一团摔在地上——这施舍比那顿打更刺他。","lead":"","tail":"躲在父亲腿后的小男孩伊柳沙，死死瞪着阿辽沙；这股羞辱，从此埋进了孩子心里。","rev":[],"kn":"自尊被再次碾伤。","cast":["snegiryov","ilyusha","alyosha"],"srcIds":["sa7b3","sa7b4"]},{"id":"sa8b1","sc":"sa8","arc":"a4","bg":"place-schoolyard","sp":"narrator","txt":"阿辽沙从修道院出来，路过小学校院，看见一群小学童围着一个瘦小的孩子扔石头骂他。阿辽沙蹲下身去劝，那瘦小孩却抓起石子，死死瞪了他一眼，转身哭着跑了。","lead":"","tail":"","rev":["alyosha","ilyusha"],"kn":"他为孩子出头。","cast":["alyosha"],"srcIds":["sa8b1","sa8b2"]},{"id":"sa8b3","sc":"sa8","arc":"a4","bg":"place-schoolyard","sp":"alyosha","txt":"（低声）这孩子……心里也有他自己的委屈。","lead":"","tail":"几个大孩子站住了，好奇地打量这位修士打扮的年轻人；他们还不知道，这个倔强的孩子，日后会牵动阿辽沙整颗心。","rev":[],"kn":"他没有生气。","cast":["alyosha"],"srcIds":["sa8b3","sa8b4"]},{"id":"sa9b1","sc":"sa9","arc":"a4","bg":"kholokolov_house","sp":"narrator","txt":"阿辽沙依约到霍赫拉科娃夫人家。夫人迎上来，又惊又急：卡捷琳娜正在客厅，伊万也在，两人说话说到让人揪心。阿辽沙隔门看见：卡捷琳娜正对伊万倾身说话，神色又傲又痛；伊万稳坐，目光冷静。随后他被领进莉兹的小房间。轮椅上的小姑娘脸颊通红，把一张折好的纸条塞到他手里。","lead":"","tail":"","rev":["alyosha","ivan","katerina","khokhlakov","lise"],"kn":"卡捷琳娜与伊万独处。","cast":["lise"],"srcIds":["sa9b1","sa9b2","sa9b3"]},{"id":"sa9b4","sc":"sa9","arc":"a4","bg":"kholokolov_house","sp":"lise","txt":"您……请一定看。等您走了再看。","lead":"","tail":"阿辽沙走出石楼时，心里装着两件事：卡捷琳娜与伊万那危险的沉默，和莉兹塞来的那张纸条。","rev":[],"kn":"少女心事初露。","cast":["lise"],"srcIds":["sa9b4","sa9b5"]},{"id":"psv3b1","sc":"p-supp-v3","arc":"a5","bg":"quiet_tavern","sp":"narrator","txt":"伊万约阿辽沙在酒馆坐下，说要在动身离开前，把彼此认识清楚。","lead":"","tail":"","rev":[],"kn":"兄弟多年疏远，今首次交心。","cast":["ivan","alyosha"],"srcIds":["psv3b1"]},{"id":"psv3b2","sc":"p-supp-v3","arc":"a5","bg":"quiet_tavern","sp":"ivan","txt":"还记得你小时候爱樱桃酱吗？我记得你才十一，我十五。","lead":"","tail":"兄弟俩喝汤吃酱，说起这些年的疏远；阿辽沙第一次真正走近二哥。伊万话锋一转，说起父亲与德米特里那笔三千卢布的烂账——他已被卷进家里的泥淖。","rev":[],"kn":"伊万其实一直记得弟弟。","cast":["ivan","alyosha"],"srcIds":["psv3b2","psv3b3","psv3b4"]},{"id":"psv3b5","sc":"p-supp-v3","arc":"a5","bg":"quiet_tavern","sp":"alyosha","txt":"你为什么这样一直看着我？阿辽沙问。伊万笑了：因为你是个站得稳的小人儿。","lead":"","tail":"茶喝完，伊万才放下玩笑，说出那句让阿辽沙心惊的自白——于是有了后来的叛逆与长诗。","rev":[],"kn":"伊万开始尊重阿辽沙。","cast":["ivan","alyosha"],"srcIds":["psv3b5","psv3b6"]},{"id":"sa10b1","sc":"sa10","arc":"a5","bg":"quiet_tavern","sp":"narrator","txt":"傍晚，伊万约阿辽沙在一家小馆子坐下，几杯酒后，他终于把压在心里的话摊开。","lead":"","tail":"","rev":["alyosha","ivan"],"kn":"兄弟夜谈开始。","cast":["ivan","alyosha"],"srcIds":["sa10b1"]},{"id":"sa10b2","sc":"sa10","arc":"a5","bg":"quiet_tavern","sp":"ivan","txt":"我没法爱邻居——人一露脸，爱就没了。我不是不信上帝，我是把这个世界，原样退回给他。","lead":"","tail":"他说起一个受虐待的孩子、一个被将军放狗咬死的农奴幼童；他说，若这一切是为了将来的'和谐'，他不配领那张票。","rev":[],"kn":"他的'叛逆'是拒受这个世界。","cast":["ivan","alyosha"],"srcIds":["sa10b2","sa10b3"]},{"id":"sa10b4","sc":"sa10","arc":"a5","bg":"quiet_tavern","sp":"alyosha","txt":"哥哥……你这是在背叛他。","lead":"","tail":"","rev":[],"kn":"他听懂了，却不能跟。","cast":["ivan","alyosha"],"srcIds":["sa10b4"]},{"id":"sa10b5","sc":"sa10","arc":"a5","bg":"quiet_tavern","sp":"ivan","txt":"我不是背叛，我只是还不接受。——听着，我给你念一段我自己写的小东西。","lead":"","tail":"","rev":[],"kn":"他要讲《宗教大法官》。","cast":["ivan","alyosha"],"srcIds":["sa10b5"]},{"id":"sa11b1","sc":"sa11","arc":"a5","bg":"seville_dungeon","sp":"narrator","txt":"伊万的诗，发生在十六世纪的塞维利亚。基督重临，却被宗教大法官关进了地牢。","lead":"","tail":"","rev":[],"kn":"这是伊万笔下的幻象。","cast":["ivan","alyosha"],"srcIds":["sa11b1"]},{"id":"sa11b2","sc":"sa11","arc":"a5","bg":"seville_dungeon","sp":"ivan","txt":"老人对他说：你为什么又来妨碍我们？你给人自由，可人受不了自由；我们替他们解决，用面包、奇迹和权威。","lead":"","tail":"阿辽沙静静听着。他知道哥哥在借老人之口，说自己心里那份对'人能否爱人'的绝望。","rev":[],"kn":"大法官的论点：人宁可吃饱、不要自由。","cast":["ivan","alyosha"],"srcIds":["sa11b2","sa11b3"]},{"id":"sa11b4","sc":"sa11","arc":"a5","bg":"seville_dungeon","sp":"ivan","txt":"末了，基督什么也没说，只走过去，吻了老人干裂的嘴唇。","lead":"","tail":"","rev":[],"kn":"诗的结尾：一个吻。","cast":["ivan","alyosha"],"srcIds":["sa11b4"]},{"id":"sa11b5","sc":"sa11","arc":"a5","bg":"quiet_tavern","sp":"alyosha","txt":"（也吻了一下哥哥的嘴唇。）","lead":"","tail":"兄弟俩在小馆里对坐良久。伊万没有生气，只把账结了，两人一同走进夜晚的小城。","rev":[],"kn":"他用吻回答哥哥的诗。","cast":["ivan","alyosha"],"srcIds":["sa11b5","sa11b6"]},{"id":"psv67b1","sc":"p-supp-v67","arc":"a5","bg":"fyodor_lodge","sp":"narrator","txt":"父亲催伊万去一趟切尔马什尼亚，为卖林子的事张罗两三天；这一趟本可去可不去。","lead":"","tail":"","rev":[],"kn":"父亲想支开伊万。","cast":["ivan"],"srcIds":["psv67b1"]},{"id":"psv67b2","sc":"p-supp-v67","arc":"a5","bg":"fyodor_lodge","sp":"smerdyakov","txt":"厨子凑过来低声撺掇：这样的好差事，您干嘛不去？老爷正盼着您出门呢。","lead":"","tail":"阿辽沙劝他留下，伊万却已厌烦这团家丑，想躲开清净。","rev":[],"kn":"厨子在推伊万离开。","cast":["smerdyakov","ivan"],"srcIds":["psv67b2","psv67b3"]},{"id":"psv67b4","sc":"p-supp-v67","arc":"a5","bg":"fyodor_lodge","sp":"ivan","txt":"我不过去切尔马什尼亚一趟，又算什么罪过。伊万替自己辩白。","lead":"","tail":"他终于动身离城；正是他这一走，给了暗处那个人动手的空隙。阿辽沙望着二哥的背影，心里第一次浮起说不清的不祥。","rev":[],"kn":"他为离开找了理由。","cast":["smerdyakov","ivan"],"srcIds":["psv67b4","psv67b5","psv67b6"]},{"id":"sa12b1","sc":"sa12","arc":"a6","bg":"place-zosima-cell","sp":"narrator","txt":"长老靠在椅上，声音虽弱，却一段一段地讲起自己的一生：哥哥早逝、从军、决斗、险些杀人，后来怎样在修道院里换了心。","lead":"","tail":"","rev":["alyosha","zosima"],"kn":"他开始口述生平。","cast":["zosima"],"srcIds":["sa12b1"]},{"id":"sa12b2","sc":"sa12","arc":"a6","bg":"place-zosima-cell","sp":"zosima","txt":"我年轻时也骄傲、也凶狠；是一个老修道士一句话点醒了我：'为一切人、一切事，你都是有罪的。'","lead":"","tail":"他讲到对农人的爱、对死者的追忆、对阿辽沙的嘱咐：不要离开修道院，也不要恨这世界。","rev":[],"kn":"他的核心教训：人人互担罪责。","cast":["zosima"],"srcIds":["sa12b2","sa12b3"]},{"id":"sa12b4","sc":"sa12","arc":"a6","bg":"place-zosima-cell","sp":"zosima","txt":"（轻声）去爱人，不停歇地爱；哪怕对人有罪，也要当他们是无辜的。","lead":"","tail":"围聚的修士们都垂首不语。油灯将尽，长老握着阿辽沙的手，把余下的话都留给了沉默。","rev":[],"kn":"这是他留给阿辽沙的钥匙。","cast":["zosima"],"srcIds":["sa12b4","sa12b5"]},{"id":"b_s1_b1","sc":"b_s1","arc":"a7","bg":"skete_coffin_cell","sp":"narrator","txt":"长老咽气不到一天，隐修所里起了议论。遗体没有像众人所盼的那样散发出馨香，反而透出腐味。客居的修士们挤在门口，压低声音嘲笑；连一向敬重长老的见习修士也变了脸色。","lead":"","tail":"","rev":["alyosha","rakitin"],"kn":"客观：长老遗体出现腐败气味。众人期待'圣者遗体不腐'，结果相反。","cast":["rakitin"],"srcIds":["b_s1_b1","b_s1_b2"]},{"id":"b_s1_b3","sc":"b_s1","arc":"a7","bg":"skete_coffin_cell","sp":"rakitin","txt":"看见没有？你那位圣人，连一点奇迹也没留下。","lead":"","tail":"阿辽沙站在棺旁，心里像被谁砸开一个洞。他不是不信长老，他只是撑不住了。","rev":[],"kn":"拉基金在讥讽长老的'神迹'期待落空。","cast":["rakitin"],"srcIds":["b_s1_b3","b_s1_b4"]},{"id":"b_s2_b1","sc":"b_s2","arc":"a7","bg":"monastery_copse","sp":"narrator","txt":"他一个人在松林小路上走，脚下是干松针。拉基金从树后闪出来，像早等着他。","lead":"","tail":"","rev":["rakitin"],"kn":"客观：拉基金主动来寻阿辽沙。","cast":["rakitin"],"srcIds":["b_s2_b1"]},{"id":"b_s2_b2","sc":"b_s2","arc":"a7","bg":"monastery_copse","sp":"rakitin","txt":"你心里堵，我懂。走，我请你喝一壶茶，顺便去看个热闹。","lead":"","tail":"阿辽沙没有力气拒绝。他像被风牵着，跟着这个机灵的、嘴上不饶人的见习修士下了山。","rev":[],"kn":"拉基金要带阿辽沙进城去格鲁申卡家。","cast":["rakitin"],"srcIds":["b_s2_b2","b_s2_b3"]},{"id":"b_s2_b4","sc":"b_s2","arc":"a7","bg":"monastery_copse","sp":"rakitin","txt":"你师傅不在了，往后这院里就没人护着你了。跟我学学怎么在世上过日子，啊？","lead":"","tail":"","rev":[],"kn":"拉基金在试探阿辽沙的信仰底线。","cast":["rakitin"],"srcIds":["b_s2_b4"]},{"id":"b_s3_b1","sc":"b_s3","arc":"a7","bg":"grushenka_house","sp":"narrator","txt":"格鲁申卡的小屋收拾得干净。她坐在沙发上，裹着披肩，看见年轻修士进门，先笑出了声。","lead":"","tail":"","rev":["grushenka"],"kn":"格鲁申卡收起钓客的轻佻，第一次对年轻修士卸下防备。","cast":["grushenka","rakitin"],"srcIds":["b_s3_b1"]},{"id":"b_s3_b2","sc":"b_s3","arc":"a7","bg":"grushenka_house","sp":"grushenka","txt":"哟，长老派来的小修士也上我这种人家来了？来，坐近点，别害怕我。","lead":"","tail":"","rev":[],"kn":"格鲁申卡惯于调戏正经人。","cast":["grushenka","rakitin"],"srcIds":["b_s3_b2"]},{"id":"b_s3_b3","sc":"b_s3","arc":"a7","bg":"grushenka_house","sp":"rakitin","txt":"他师傅刚死，心里正难过呢。","lead":"","tail":"格鲁申卡听完，没再笑。她伸手从碟子里拿了一颗核桃塞进阿辽沙手里。","rev":[],"kn":"拉基金故意把场面搅浑。","cast":["grushenka","rakitin"],"srcIds":["b_s3_b3","b_s3_b4"]},{"id":"b_s3_b5","sc":"b_s3","arc":"a7","bg":"grushenka_house","sp":"grushenka","txt":"小修士，你记住我今天这颗洋葱——我也不是完全坏透的女人。","lead":"","tail":"","rev":[],"kn":"她用'一颗洋葱'自嘲，对应后面'一个洋葱'的故事。","cast":["grushenka","rakitin"],"srcIds":["b_s3_b5"]},{"id":"b_s4_b1","sc":"b_s4","arc":"a7","bg":"monastery_garden_night","sp":"narrator","txt":"他回到修道院，躺在长老棺旁的地板上。白天的议论、格鲁申卡的笑、那一颗核桃，在脑子里搅成一团。他低声念着长老生前所讲过的话，念着念着，意识飘开，做起梦来。","lead":"","tail":"","rev":["alyosha"],"kn":"客观：阿辽沙回到棺旁。","cast":[],"srcIds":["b_s4_b1","b_s4_b2"]},{"id":"b_s4_b3","sc":"b_s4","arc":"a7","bg":"monastery_garden_night","sp":"narrator","txt":"他梦见迦拿的婚宴。客人们坐满，酒用尽了，母亲们说没有酒了；主人说，把缸倒满吧。他醒来，泪如雨下。他扑倒在地，亲吻修道院的泥土，又笑着站起来。他心里不再追问长老的遗体为什么没有发光。他只想着要走到人中间去，去做事。","lead":"","tail":"","rev":[],"kn":"这是阿辽沙的梦，不是真实场景；他把长老的话和福音故事叠在一起。","cast":[],"srcIds":["b_s4_b3","b_s4_b4","b_s4_b5"]},{"id":"b_s5_b1","sc":"b_s5","arc":"a8","bg":"samsonov_house","sp":"narrator","txt":"同一时刻，城里另一头。德米特里疯了似的跑进老商人萨姆索诺夫的家。他要三千卢布。","lead":"","tail":"","rev":["dmitri","samsonov"],"kn":"客观：米嘉急需三千卢布。他自己说，这钱是为了还给卡捷琳娜·伊万诺芙娜，好堂堂正正离开她，再去找格鲁申卡。","cast":["dmitri","samsonov"],"srcIds":["b_s5_b1"]},{"id":"b_s5_b2","sc":"b_s5","arc":"a8","bg":"samsonov_house","sp":"dmitri","txt":"库兹马·库兹米奇，我把我那份田产押给你，只要三千，过两天我连本带利还！","lead":"","tail":"","rev":[],"kn":"米嘉自述：他愿以田产作抵押借钱。","cast":["dmitri","samsonov"],"srcIds":["b_s5_b2"]},{"id":"b_s5_b3","sc":"b_s5","arc":"a8","bg":"samsonov_house","sp":"samsonov","txt":"田产？你那份田早不在你手里了。这样——你去找里亚戈维，他在外面庄子上，你把那片小树林卖给他，他或许肯出几个钱。","lead":"","tail":"米嘉没听出这话里的玩笑。他如获至宝，鞠了一躬就往外跑。他以为这是一根救命稻草。","rev":[],"kn":"客观：萨姆索诺夫没有借钱，而是把米嘉支去里亚戈维那里。米嘉后来才明白这是句玩笑话。","cast":["dmitri","samsonov"],"srcIds":["b_s5_b3","b_s5_b4"]},{"id":"b_s6_b1","sc":"b_s6","arc":"a8","bg":"road_to_lyagavy","sp":"narrator","txt":"米嘉连夜租了三套马车，赶去几十里外的庄子找里亚戈维。夜路颠簸，他怀里揣着最后一点钱。他到了客栈，里亚戈维早喝得烂醉，蜷在长凳上睡死。米嘉守到天亮，那人睁了睁眼，又醉倒过去。","lead":"","tail":"","rev":["dmitri","lyagavy"],"kn":"客观：米嘉连夜赶路。","cast":[],"srcIds":["b_s6_b1","b_s6_b2"]},{"id":"b_s6_b3","sc":"b_s6","arc":"a8","bg":"road_to_lyagavy","sp":"narrator","txt":"他这才明白萨姆索诺夫是在耍他。他坐在台阶上，把脸埋进手掌。钱没借到，天已经亮了。他跳上回程的马车，脑子里只剩一个念头：她要是真在父亲那儿，他今晚就要去把她夺回来。","lead":"","tail":"","rev":[],"kn":"客观：筹款失败，他只剩最后一条路。","cast":[],"srcIds":["b_s6_b3","b_s6_b4"]},{"id":"b_s7_b1","sc":"b_s7","arc":"a8","bg":"fyodor_garden_window","sp":"narrator","txt":"他又连夜赶回来。半夜，他翻过父亲家的花园矮墙，躲在窗边的灌木后。他要确认格鲁申卡是不是在父亲屋里。父亲一个人走到窗边，向外张望。米嘉屏住呼吸。父亲做了一个手势——米嘉后来一口咬定那是在示意格鲁申卡进来。","lead":"","tail":"","rev":["dmitri","fyodor"],"kn":"客观：米嘉潜入父亲花园。他自己后来在预审中承认这一点。","cast":["dmitri","fyodor"],"srcIds":["b_s7_b1","b_s7_b2"]},{"id":"b_s7_b3","sc":"b_s7","arc":"a8","bg":"fyodor_garden_window","sp":"narrator","txt":"他从抽屉里摸出那个铜研杵，攥在手里。他对自己说，我不是来杀人的，我只是来确认她在不在。屋里没有格鲁申卡的声音。父亲伸头看了一会儿，缩回屋去，窗也跟着合上。","lead":"","tail":"","rev":[],"kn":"客观：他随身带了凶器。","cast":["dmitri","fyodor"],"srcIds":["b_s7_b3","b_s7_b4"]},{"id":"b_s8_b1","sc":"b_s8","arc":"a8","bg":"fyodor_garden_window","sp":"narrator","txt":"他刚要翻出墙外，老仆格里戈里从暗处扑出来，抱住他的腿。","lead":"","tail":"","rev":["grigory"],"kn":"客观：格里戈里在花园守夜。","cast":["grigory","dmitri"],"srcIds":["b_s8_b1"]},{"id":"b_s8_b2","sc":"b_s8","arc":"a8","bg":"fyodor_garden_window","sp":"grigory","txt":"你这个杀父的孽种！我看你往哪儿跑——","lead":"","tail":"米嘉抡起铜研杵，一击砸在老人头上。格里戈里像一截木头似的倒下去，血顺着草叶漫开。米嘉蹲下去摸他的鼻息，手抖着。他以为自己杀了人。他在衣襟上擦干净研杵上的血，翻墙逃走。","rev":[],"kn":"格里戈里认出米嘉并高声喊他'杀父孽种'。","cast":["grigory","dmitri"],"srcIds":["b_s8_b2","b_s8_b3","b_s8_b4"]},{"id":"b_s9_b1","sc":"b_s9","arc":"a8","bg":"perhotin_house","sp":"narrator","txt":"他没有回家。他先跑到年轻官员彼尔霍金那里，把身上仅剩的几张大票子换成零钱。","lead":"","tail":"","rev":["dmitri","perhotin"],"kn":"客观：米嘉在彼尔霍金处换钱。","cast":["perhotin","dmitri"],"srcIds":["b_s9_b1"]},{"id":"b_s9_b2","sc":"b_s9","arc":"a8","bg":"perhotin_house","sp":"perhotin","txt":"德米特里·费奥多罗维奇，你这一身血是怎么回事？","lead":"","tail":"","rev":[],"kn":"客观：米嘉衣袖带血被旁人看见。","cast":["perhotin","dmitri"],"srcIds":["b_s9_b2"]},{"id":"b_s9_b3","sc":"b_s9","arc":"a8","bg":"perhotin_house","sp":"dmitri","txt":"血？没什么。我……我马上要去一个地方。给我备车。","lead":"","tail":"他冲去格鲁申卡的小屋，门却锁着。邻居告诉他，她跟一个波兰客人上莫克罗耶去了。他几乎笑出声来。她在那儿，他也去。他把换开的钱往怀里一揣，跳上马车。","rev":[],"kn":"米嘉没有对彼尔霍金说实话。","cast":["perhotin","dmitri"],"srcIds":["b_s9_b3","b_s9_b4","b_s9_b5"]},{"id":"b_s10_b1","sc":"b_s10","arc":"a8","bg":"mokroye_tavern","sp":"narrator","txt":"莫克罗耶村的酒馆大厅。格鲁申卡坐在波兰客人身边，穿着好裙子，眼神却一直往门口瞟。米嘉推门进来。他没有扑上去闹。他在格鲁申卡对面坐下，像换了一个人。","lead":"","tail":"","rev":["dmitri","grushenka","the_pole"],"kn":"客观：她原本随波兰人来寻欢。","cast":["grushenka"],"srcIds":["b_s10_b1","b_s10_b2"]},{"id":"b_s10_b3","sc":"b_s10","arc":"a8","bg":"mokroye_tavern","sp":"grushenka","txt":"你怎么也跟来了？你这是要干什么？","lead":"","tail":"他掏出大把钞票拍在桌上，请整间酒馆喝酒、请吉普赛人唱歌。掌柜特里丰·鲍里索维奇眼睛都亮了。他对格鲁申卡说，他明天一早就去自首——如果今天夜里她肯陪他坐到天亮。酒、歌、火光。他半醉半醒，以为这就是他最后一夜。","rev":[],"kn":"格鲁申卡没料到他追来。","cast":["grushenka"],"srcIds":["b_s10_b3","b_s10_b4","b_s10_b5","b_s10_b6"]},{"id":"b_s11_b1","sc":"b_s11","arc":"a9","bg":"mokroye_tavern","sp":"narrator","txt":"天没亮，酒馆门被人推开。县里警官、预审推事尼古拉·帕尔菲诺维奇、检察官伊波利特·基里洛维奇，带着几名法警走了进来。米嘉起初不肯信。等他明白过来，脸一下子灰了。他没有反抗，伸出手让法警上铐。","lead":"","tail":"","rev":["dmitri","kirillovitch","nikolay_parfenovitch"],"kn":"客观：父亲费奥多尔昨夜被人发现死在自家花园里。这一消息此刻第一次传到米嘉耳中。","cast":["dmitri","kirillovitch","nikolay_parfenovitch"],"srcIds":["b_s11_b1","b_s11_b2"]},{"id":"b_s11_b3","sc":"b_s11","arc":"a9","bg":"mokroye_tavern","sp":"grushenka","txt":"米嘉！你等等——这不是你做的，不是你！","lead":"","tail":"米嘉回头看了她一眼，没有说话。他被法警夹着，走出灯火通明的酒馆，走进清晨的冷风里。","rev":["grushenka"],"kn":"格鲁申卡当场喊冤；这是她的主观立场，不是客观结论。","cast":["grushenka"],"srcIds":["b_s11_b3","b_s11_b4"]},{"id":"b_s12_b1","sc":"b_s12","arc":"a9","bg":"investigation_room","sp":"narrator","txt":"城里警察局的小屋里，灯一直亮到天亮。预审推事把桌子擦干净，摊开笔录。","lead":"","tail":"","rev":["kirillovitch","nikolay_parfenovitch"],"kn":"客观：预审开始。","cast":["nikolay_parfenovitch","dmitri","kirillovitch"],"srcIds":["b_s12_b1"]},{"id":"b_s12_b2","sc":"b_s12","arc":"a9","bg":"investigation_room","sp":"nikolay_parfenovitch","txt":"德米特里·费奥多罗维奇，你父亲昨夜被人用黄铜研杵砸死在花园里。格里戈里重伤未死。你有什么要说？","lead":"","tail":"","rev":[],"kn":"客观事实（经验尸与证人确认）：费奥多尔死于头部重击；格里戈里被同一件凶器击伤但幸存。","cast":["nikolay_parfenovitch","dmitri","kirillovitch"],"srcIds":["b_s12_b2"]},{"id":"b_s12_b3","sc":"b_s12","arc":"a9","bg":"investigation_room","sp":"dmitri","txt":"格里戈里活着？……那好。我打了他，我不否认。但我没杀父亲！我砸了格里戈里之后就翻墙跑了，我连父亲的屋门都没进去。","lead":"","tail":"","rev":["dmitri"],"kn":"米嘉自述：他承认打了格里戈里，否认杀害父亲。这是他的口供，不等于客观结论。","cast":["nikolay_parfenovitch","dmitri","kirillovitch"],"srcIds":["b_s12_b3"]},{"id":"b_s12_b4","sc":"b_s12","arc":"a9","bg":"investigation_room","sp":"kirillovitch","txt":"那你在莫克罗耶花的那三千卢布，是哪儿来的？卡捷琳娜·伊万诺芙娜不是说，你只带走了她寄给她姨母的三千吗？","lead":"","tail":"","rev":[],"kn":"客观：卡捷琳娜曾交给米嘉三千卢布托她转交。他在莫克罗耶一夜挥霍掉的数目，远超过他身上合理所有。","cast":["nikolay_parfenovitch","dmitri","kirillovitch"],"srcIds":["b_s12_b4"]},{"id":"b_s12_b5","sc":"b_s12","arc":"a9","bg":"investigation_room","sp":"dmitri","txt":"那三千我八月份跟格鲁申卡去莫克罗耶时花了一半！剩下的一半，我缝在一个小布袋里，挂在脖子上——我羞于花它，我准备还给卡捷琳娜！你们去搜，搜出来！","lead":"","tail":"他不知道那布袋此刻在谁手里。预审推事和检察官交换了一个眼神。窗外，天已经亮了。","rev":[],"kn":"米嘉自述：他说另一半缝在胸前布袋里。这一说法是否属实，只有等到开庭对质，才能见分晓。","cast":["nikolay_parfenovitch","dmitri","kirillovitch"],"srcIds":["b_s12_b5","b_s12_b6"]},{"id":"s-c1b1","sc":"s-c1","arc":"a10","bg":"town_ditch_bridge","sp":"narrator","txt":"长老下葬那天傍晚，阿辽沙走过米哈伊洛夫斯基街口的小桥，看见一群放学的小学生，每个人兜里都鼓鼓地揣着石子。沟对面一个瘦小的男孩独自站着，脸色苍白，又大又黑的眼睛闪着敌意，兜里全是石子。","lead":"","tail":"","rev":["ilyusha"],"kn":"阿辽沙在街头遇见孩子群。","cast":["alyosha"],"srcIds":["s-c1b1","s-c1b2"]},{"id":"s-c1b3","sc":"s-c1","arc":"a10","bg":"town_ditch_bridge","sp":"alyosha","txt":"你们六个打一个，不害臊吗？会打死人的。","lead":"","tail":"伊柳沙先一石子砸在阿辽沙肩上，又扑上来死死咬住他的手指，咬到见血才松口。","rev":[],"kn":"阿辽沙上前劝架。","cast":["alyosha"],"srcIds":["s-c1b3","s-c1b4"]},{"id":"s-c1b5","sc":"s-c1","arc":"a10","bg":"town_ditch_bridge","sp":"alyosha","txt":"你看，我把你咬成这样了。我到底哪里对不起你？","lead":"","tail":"伊柳沙哇地哭出来，一路跑远。阿辽沙下定决心：要弄清这孩子为什么这么恨他。","rev":[],"kn":"阿辽沙不还手，只问缘故。","cast":["alyosha"],"srcIds":["s-c1b5","s-c1b6"]},{"id":"s-c2b1","sc":"s-c2","arc":"a10","bg":"snegiryov_room","sp":"narrator","txt":"阿辽沙按地址找到上尉家。一间又挤又破的农舍：俄式炉子、绳子上晾着破布、两张铺着拼布被的床。","lead":"","tail":"","rev":[],"kn":"上尉一家穷到叮当响。","cast":["snegiryov","alyosha"],"srcIds":["s-c2b1"]},{"id":"s-c2b2","sc":"s-c2","arc":"a10","bg":"snegiryov_room","sp":"snegiryov","txt":"请坐，先生——就像老喜剧里说的，请坐。","lead":"","tail":"屋里还有黄脸病弱的太太、刻薄的女儿瓦尔瓦拉、腿驼背驼的年轻姑娘，都冷冷打量阿辽沙。","rev":["snegiryov"],"kn":"这就是被德米特里在酒馆揪过胡子的上尉。","cast":["snegiryov","alyosha"],"srcIds":["s-c2b2","s-c2b3"]},{"id":"s-c2b4","sc":"s-c2","arc":"a10","bg":"snegiryov_room","sp":"snegiryov","txt":"我儿子那天在广场上吻了你哥哥的手，求他原谅我。从那天起，同学就叫他'破麻屑'，他就一病不起。","lead":"","tail":"里床上，伊柳沙瘦得脱了形，看见阿辽沙立刻扭过脸去。","rev":[],"kn":"伊柳沙是为父亲出头，恨所有卡拉马佐夫。","cast":["snegiryov","alyosha"],"srcIds":["s-c2b4","s-c2b5"]},{"id":"s-c2b6","sc":"s-c2","arc":"a10","bg":"snegiryov_room","sp":"alyosha","txt":"你等着。我哥哥会亲自来，当面向你道歉。","lead":"","tail":"","rev":[],"kn":"阿辽沙许下了这个承诺。","cast":["snegiryov","alyosha"],"srcIds":["s-c2b6"]},{"id":"s-c3b1","sc":"s-c3","arc":"a10","bg":"kolya_street","sp":"narrator","txt":"十三岁的科利亚·克拉索特金是全城最自负的小学生，训出一条会装死的狗，叫'佩列兹旺'。","lead":"","tail":"","rev":["krassotkin"],"kn":"科利亚聪明、傲气，是伊柳沙唯一的朋友。","cast":["krassotkin"],"srcIds":["s-c3b1"]},{"id":"s-c3b2","sc":"s-c3","arc":"a10","bg":"snegiryov_room","sp":"krassotkin","txt":"我不是小孩子，我懂政治，也懂科学。","lead":"","tail":"科利亚一直不敢去看伊柳沙，因为全班都在骂他；今天他终于踏进这间小屋。伊柳沙看见科利亚，气都喘不上来，伸手握住他的手。围在床边的孩子们都安静了。几天后，伊柳沙死了。上尉扑在小尸体上，疯了似的不肯放。","rev":[],"kn":"他故意装成熟，其实还是个孩子。","cast":["krassotkin"],"srcIds":["s-c3b2","s-c3b3","s-c3b4","s-c3b5"]},{"id":"psx15b1","sc":"p-supp-xi15","arc":"a11","bg":"hospital_room","sp":"narrator","txt":"预审之后，伊万病倒了；他与卡捷琳娜早已互相折磨，又彼此牵扯不清。阿辽沙来看二哥，转达卡捷琳娜的话，也带来莉兹近来古怪自轻的消息。伊万心里那个念头越来越压不住：父亲死的那夜，自己其实早知道、甚至默许了什么。他临行前斯乜尔佳科夫那句意味深长的话，一遍遍在耳边回响；他终于下定决心，再去见那个厨子。","lead":"","tail":"","rev":[],"kn":"伊万与卡捷琳娜关系扭曲。","cast":["ivan"],"srcIds":["psx15b1","psx15b2","psx15b3","psx15b4"]},{"id":"psx15b5","sc":"p-supp-xi15","arc":"a11","bg":"hospital_room","sp":"ivan","txt":"不是你……不，就是他。伊万喃喃着，掀被下床。","lead":"","tail":"这场病里的每一步，都把他逼向那间小屋里的最后对质。","rev":[],"kn":"他要去对质。","cast":["ivan"],"srcIds":["psx15b5","psx15b6"]},{"id":"s-c4b1","sc":"s-c4","arc":"a11","bg":"smerdyakov_lodge","sp":"narrator","txt":"父亲被杀后，伊万回到城里。他做的第一件事，就是去找仆役斯乜尔佳科夫。斯乜尔佳科夫二十四岁，脸黄皱、显老，是个癫痫病人；如今装病躺在里屋，老夫妇守在一边。","lead":"","tail":"","rev":["smerdyakov"],"kn":"伊万怀疑这个仆人。","cast":["ivan","smerdyakov"],"srcIds":["s-c4b1","s-c4b2"]},{"id":"s-c4b3","sc":"s-c4","arc":"a11","bg":"smerdyakov_lodge","sp":"ivan","txt":"那天夜里，到底发生了什么？","lead":"","tail":"","rev":[],"kn":"伊万直接质问。","cast":["ivan","smerdyakov"],"srcIds":["s-c4b3"]},{"id":"s-c4b4","sc":"s-c4","arc":"a11","bg":"smerdyakov_lodge","sp":"smerdyakov","txt":"我癫痫发作，倒在篱笆底下，什么都不知道。","lead":"","tail":"伊万第一次来，什么都没问出来。但他甩不掉一种直觉：这个人在撒谎。","rev":[],"kn":"他什么都不认。","cast":["ivan","smerdyakov"],"srcIds":["s-c4b4","s-c4b5"]},{"id":"s-c5b1","sc":"s-c5","arc":"a11","bg":"smerdyakov_lodge","sp":"narrator","txt":"隔了几天，伊万第二次来。这次他逼得更紧。","lead":"","tail":"","rev":[],"kn":"伊万不肯放手。","cast":["smerdyakov","ivan"],"srcIds":["s-c5b1"]},{"id":"s-c5b2","sc":"s-c5","arc":"a11","bg":"smerdyakov_lodge","sp":"smerdyakov","txt":"你当时不就是希望你父亲早点死吗？","lead":"","tail":"","rev":[],"kn":"他开始反咬。","cast":["smerdyakov","ivan"],"srcIds":["s-c5b2"]},{"id":"s-c5b3","sc":"s-c5","arc":"a11","bg":"smerdyakov_lodge","sp":"ivan","txt":"住嘴。我……我是个卑鄙的人。","lead":"","tail":"","rev":[],"kn":"伊万心里确实盼过父亲死——这一点他自己清楚。","cast":["smerdyakov","ivan"],"srcIds":["s-c5b3"]},{"id":"s-c5b4","sc":"s-c5","arc":"a11","bg":"smerdyakov_lodge","sp":"smerdyakov","txt":"我什么都没干。是你自己心里明白。","lead":"","tail":"伊万离开时，这句话像钉子一样扎在他脑子里。","rev":[],"kn":"他不招，也不放。","cast":["smerdyakov","ivan"],"srcIds":["s-c5b4","s-c5b5"]},{"id":"s-c6b1","sc":"s-c6","arc":"a11","bg":"smerdyakov_lodge","sp":"narrator","txt":"第三次来，斯乜尔佳科夫从床上坐起来，不再装病了。","lead":"","tail":"","rev":[],"kn":"摊牌的时候到了。","cast":["smerdyakov","ivan"],"srcIds":["s-c6b1"]},{"id":"s-c6b2","sc":"s-c6","arc":"a11","bg":"smerdyakov_lodge","sp":"smerdyakov","txt":"是我杀的。钱是我拿的。可你呢？你明知道我会动手，你故意躲开——你才是主谋。","lead":"","tail":"那卷三千卢布就在桌上，是父亲的买命钱。","rev":[],"kn":"他自认杀人。","cast":["smerdyakov","ivan"],"srcIds":["s-c6b2","s-c6b3","s-c6b4"]},{"id":"s-c6b5","sc":"s-c6","arc":"a11","bg":"smerdyakov_lodge","sp":"ivan","txt":"……我没有动手。可我盼过他死。","lead":"","tail":"","rev":[],"kn":"伊万承认的是自己灵魂的罪，不是动手杀人。","cast":["smerdyakov","ivan"],"srcIds":["s-c6b5"]},{"id":"s-c6b6","sc":"s-c6","arc":"a11","bg":"smerdyakov_lodge","sp":"smerdyakov","txt":"你去法庭上说吧。我什么都不认。","lead":"","tail":"","rev":[],"kn":"唯一的证人不肯出庭作证。","cast":["smerdyakov","ivan"],"srcIds":["s-c6b6"]},{"id":"s-c7b1","sc":"s-c7","arc":"a11","bg":"ivan_rooms","sp":"narrator","txt":"伊万回到自己租的小屋，发烧。夜里，一个穿黄褐色外套的小绅士敲门进来做客。","lead":"","tail":"","rev":["devil"],"kn":"这是伊万高烧中的幻象。","cast":["devil","ivan"],"srcIds":["s-c7b1"]},{"id":"s-c7b2","sc":"s-c7","arc":"a11","bg":"ivan_rooms","sp":"devil","txt":"我就是你心里那个又俗气又琐碎的小鬼。你不是说没有不朽就没有美德吗？那你现在为什么还痛苦？","lead":"","tail":"","rev":[],"kn":"他是伊万的投影，不是外部实体。","cast":["devil","ivan"],"srcIds":["s-c7b2","s-c7b3"]},{"id":"s-c7b4","sc":"s-c7","arc":"a11","bg":"ivan_rooms","sp":"ivan","txt":"你就是我！滚出去！","lead":"","tail":"铜器穿过小绅士的影子，他消失了。伊万醒来，满头冷汗。","rev":[],"kn":"伊万知道他是自己。","cast":["devil","ivan"],"srcIds":["s-c7b4","s-c7b5"]},{"id":"s-c8b1","sc":"s-c8","arc":"a11","bg":"smerdyakov_lodge","sp":"narrator","txt":"第二天一早，有人敲门：斯乜尔佳科夫在自己小屋里上吊死了。桌上留一张字条，字迹歪歪扭扭：'按我自己的意愿毁灭自己，请勿怪罪任何人。'","lead":"","tail":"","rev":[],"kn":"证人死了。","cast":["ivan"],"srcIds":["s-c8b1","s-c8b2"]},{"id":"s-c8b3","sc":"s-c8","arc":"a11","bg":"smerdyakov_lodge","sp":"ivan","txt":"……他最后把那件事，已经告诉别人了。","lead":"","tail":"伊万被人扶回住处，从此一病不起。","rev":[],"kn":"伊万知道法庭上他跑不掉。","cast":["ivan"],"srcIds":["s-c8b3","s-c8b4"]},{"id":"s-c9b1","sc":"s-c9","arc":"a12","bg":"court","sp":"narrator","txt":"开庭那天，旁听席挤得水泄不通。伊万穿一身黑，坐在被告席后面。老仆人格里戈里出庭作证：他看见德米特里冲进花园，一铜杵把他打倒，手里还攥着那东西。医生们上台作证，争论德米特里是不是疯子；一袋花生成了旁听席的笑料。","lead":"","tail":"","rev":[],"kn":"庭审开始。","cast":["dmitri","grigory"],"srcIds":["s-c9b1","s-c9b2","s-c9b3"]},{"id":"s-c9b4","sc":"s-c9","arc":"a12","bg":"court","sp":"katerina","txt":"我提交这封信——是德米特里亲笔写的。","lead":"","tail":"那是德米特里喝醉时写的：他明明白白写着，他要杀父亲，抢走那三千卢布。旁听席嗡嗡作响；德米特里在被告席上浑身发抖。","rev":["katerina"],"kn":"卡捷琳娜出庭。","cast":["katerina"],"srcIds":["s-c9b4","s-c9b5","s-c9b6"]},{"id":"s-c10b1","sc":"s-c10","arc":"a12","bg":"court","sp":"kirillovitch","txt":"这是两代卡拉马佐夫式的放纵撞在一起！他父亲是色鬼，他儿子是暴徒——杀人是必然的。","lead":"","tail":"检察官把全城各色人等一一画成漫画，最后套上'三驾马车'的比喻，旁听席听得入神。","rev":["kirillovitch"],"kn":"【控方主张】激情杀人、必然如此。","cast":["kirillovitch","fetyukovitch"],"srcIds":["s-c10b1","s-c10b2"]},{"id":"s-c10b3","sc":"s-c10","arc":"a12","bg":"court","sp":"fetyukovitch","txt":"那笔钱——三千卢布——真的存在过吗？谁亲眼见过？既然没有钱，就没有抢劫。既然没有抢劫—— ——也就谈不上杀人。那真正的凶手是谁？是那个上吊的仆人。","lead":"","tail":"旁听席有人鼓掌，有人嘘。整个法庭被两篇讲稿撕扯成两半。","rev":["fetyukovitch"],"kn":"【辩方主张】钱的事根本说不清。","cast":["kirillovitch","fetyukovitch"],"srcIds":["s-c10b3","s-c10b4","s-c10b5","s-c10b6"]},{"id":"s-c11b1","sc":"s-c11","arc":"a12","bg":"court","sp":"narrator","txt":"陪审团退席，过了漫长的一小时。整个大厅静得能听见钟摆。庭长宣读：谋杀父亲——有罪；抢劫——有罪。","lead":"","tail":"","rev":[],"kn":"判决要下来了。","cast":["dmitri"],"srcIds":["s-c11b1","s-c11b2"]},{"id":"s-c11b3","sc":"s-c11","arc":"a12","bg":"court","sp":"dmitri","txt":"我没杀父亲！我认罪的是我的灵魂，不是这件事！","lead":"","tail":"法警给他戴上镣铐，把他从被告席带下去。旁听席一片唏嘘。","rev":[],"kn":"德米特里不服。","cast":["dmitri"],"srcIds":["s-c11b3","s-c11b4"]},{"id":"s-c12b1","sc":"s-c12","arc":"a12","bg":"hospital_ivan","sp":"narrator","txt":"判决后，几个朋友偷偷凑钱，商量让德米特里在流放途中逃到美国去。德米特里本人在犹豫：走，还是按判决上路？伊万一直发烧说胡话。卡捷琳娜守在他床边，两人之间隔着没说出口的话。","lead":"","tail":"","rev":[],"kn":"【这只是一个计划】路线、钱、接应都还没落实。","cast":["ivan","alyosha"],"srcIds":["s-c12b1","s-c12b2","s-c12b3"]},{"id":"s-c12b4","sc":"s-c12","arc":"a12","bg":"hospital_ivan","sp":"ivan","txt":"如果我兄弟真要逃……我不能拦他。","lead":"","tail":"伊万望着天花板，许久没有作声。窗外的小城渐渐入夜，那个计划再没有人提起。","rev":[],"kn":"伊万的态度。","cast":["ivan"],"srcIds":["s-c12b4","s-c12b5"]},{"id":"s-c13b1","sc":"s-c13","arc":"a12","bg":"cemetery_stone","sp":"narrator","txt":"伊柳沙下葬那天，全班同学都来了。上尉扑在小棺材上，哭得站不起来。","lead":"","tail":"","rev":[],"kn":"葬礼。","cast":["snegiryov","ilyusha","alyosha","krassotkin"],"srcIds":["s-c13b1"]},{"id":"s-c13b2","sc":"s-c13","arc":"a12","bg":"cemetery_stone","sp":"alyosha","txt":"跟我来，到那块大石头那儿去。我们都爱过伊柳沙这个孩子。以后不管我们变成什么样，都不要忘记今天。我们也许会做坏事，会笑别人。但只要记得伊柳沙的葬礼，心里就还存着一点善。","lead":"","tail":"","rev":[],"kn":"就是 s-c1 那块大石头。","cast":["alyosha","krassotkin"],"srcIds":["s-c13b2","s-c13b3","s-c13b4"]},{"id":"s-c13b5","sc":"s-c13","arc":"a12","bg":"cemetery_stone","sp":"krassotkin","txt":"我们记得卡拉马佐夫！","lead":"","tail":"阿辽沙心里回答：是的，我要永远记得他——和你们一起。","rev":[],"kn":"孩子们齐声应和。","cast":["alyosha","krassotkin"],"srcIds":["s-c13b5","s-c13b6"]}]
+var BEAT_MODES={"sa3b2":"flashback","sa3b5":"flashback","sa11b1":"vision","sa11b2":"vision","sa11b4":"vision","b_s4_b1":"dream","b_s4_b3":"dream"};;
+var ARCS=[{"id": "a1", "title": "家族往事", "books": "第一部", "startScene": "s1"}, {"id": "a2", "title": "意外的聚会", "books": "第二部", "startScene": "s4"}, {"id": "a3", "title": "感官者", "books": "第三部", "startScene": "sa2"}, {"id": "a4", "title": "刺痛", "books": "第四部", "startScene": "sa6"}, {"id": "a5", "title": "叛逆与宗教大法官", "books": "第五部", "startScene": "p-supp-v3"}, {"id": "a6", "title": "俄罗斯修士", "books": "第六部", "startScene": "sa12"}, {"id": "a7", "title": "阿辽沙", "books": "第七部", "startScene": "b_s1"}, {"id": "a8", "title": "米嘉", "books": "第八部", "startScene": "b_s5"}, {"id": "a9", "title": "预审", "books": "第九部", "startScene": "b_s11"}, {"id": "a10", "title": "男孩们", "books": "第十部", "startScene": "s-c1"}, {"id": "a11", "title": "伊万", "books": "第十一部", "startScene": "p-supp-xi15"}, {"id": "a12", "title": "审判与尾声", "books": "第十二部+尾声", "startScene": "s-c9"}];
+var SPN={"narrator": "旁白", "alyosha": "阿辽沙", "devil": "魔鬼（伊万幻象）", "dmitri": "德米特里（米嘉）", "fetyukovitch": "费久科维奇律师", "fyodor": "费奥多尔·巴甫洛维奇", "grigory": "格里戈里", "grushenka": "格鲁申卡", "ivan": "伊万", "kalganov": "卡尔加诺夫", "katerina": "卡捷琳娜·伊万诺芙娜", "khokhlakov": "霍赫拉科娃夫人", "kirillovitch": "伊波利特·基里洛维奇", "krassotkin": "科利亚·克拉索特金", "librarian": "修士/执事", "lise": "莉兹", "maximov": "马克西莫夫", "miusov": "米乌索夫", "nikolay_parfenovitch": "尼古拉·帕尔菲诺维奇（预审推事）", "peasant": "农妇", "perhotin": "彼尔霍金", "rakitin": "拉基金", "samsonov": "库兹马·萨姆索诺夫", "smerdyakov": "斯乜尔佳科夫", "snegiryov": "斯涅吉辽夫上尉", "zosima": "佐西马长老", "marfa": "玛尔法", "ilyusha": "伊柳沙"};
+var PORTRAIT={"fyodor": "assets/comic/fyodor.jpg", "dmitri": "assets/comic/dmitri.jpg", "ivan": "assets/comic/ivan.jpg", "alyosha": "assets/comic/alyosha.jpg", "zosima": "assets/comic/zosima.jpg", "miusov": "assets/comic/miusov.jpg", "khokhlakov": "assets/comic/khokhlakov.jpg", "lise": "assets/comic/lise.jpg", "katerina": "assets/comic/full/katerina.jpg", "grushenka": "assets/comic/full/grushenka.jpg", "smerdyakov": "assets/comic/full/smerdyakov.jpg", "grigory": "assets/comic/full/grigory.jpg", "rakitin": "assets/comic/full/rakitin.jpg", "snegiryov": "assets/comic/full/captain_snegiryov.jpg", "krassotkin": "assets/comic/full/kolya.jpg", "kirillovitch": "assets/comic/full/prosecutor_ippolit.jpg", "fetyukovitch": "assets/comic/full/defense_fetyukovitch.jpg", "devil": "assets/comic/full/devil_projection.jpg", "marfa": "assets/comic/full/marfa.jpg", "ilyusha": "assets/comic/full/ilyusha.jpg"};
+var CHAR={"alyosha": {"name": "阿辽沙", "info": ""}, "devil": {"name": "魔鬼（伊万幻象）", "info": ""}, "dmitri": {"name": "德米特里（米嘉）", "info": ""}, "fetyukovitch": {"name": "费久科维奇律师", "info": ""}, "fyodor": {"name": "费奥多尔·巴甫洛维奇", "info": ""}, "grigory": {"name": "格里戈里", "info": ""}, "grushenka": {"name": "格鲁申卡", "info": ""}, "ivan": {"name": "伊万", "info": ""}, "kalganov": {"name": "卡尔加诺夫", "info": ""}, "katerina": {"name": "卡捷琳娜·伊万诺芙娜", "info": ""}, "khokhlakov": {"name": "霍赫拉科娃夫人", "info": ""}, "kirillovitch": {"name": "伊波利特·基里洛维奇", "info": ""}, "krassotkin": {"name": "科利亚·克拉索特金", "info": ""}, "librarian": {"name": "修士/执事", "info": ""}, "lise": {"name": "莉兹", "info": ""}, "maximov": {"name": "马克西莫夫", "info": ""}, "miusov": {"name": "米乌索夫", "info": ""}, "nikolay_parfenovitch": {"name": "尼古拉·帕尔菲诺维奇（预审推事）", "info": ""}, "peasant": {"name": "农妇", "info": ""}, "perhotin": {"name": "彼尔霍金", "info": ""}, "rakitin": {"name": "拉基金", "info": ""}, "samsonov": {"name": "库兹马·萨姆索诺夫", "info": ""}, "smerdyakov": {"name": "斯乜尔佳科夫", "info": ""}, "snegiryov": {"name": "斯涅吉辽夫上尉", "info": ""}, "zosima": {"name": "佐西马长老", "info": ""}, "marfa": {"name": "玛尔法", "info": "斯乜尔佳科夫之妻，费奥多尔家的仆妇。"}, "ilyusha": {"name": "伊柳沙", "info": "斯涅吉辽夫上尉之子，小学生。"}};
+var BGMAP={"place-s1":"scene-family","place-s2":"scene-estate","place-s3":"scene-mentor","place-s4":"scene-arrival","place-s5":"scene-buffoon","place-s6":"scene-women","place-s7":"scene-visitors","place-s8":"scene-lise","place-s9":"scene-debate","place-s10":"scene-conflict","place-s11":"scene-bow","place-karamazov-parlor":"scene-family","place-karamazov-yard":"scene-estate","place-zosima-cell":"scene-mentor","place-monastery-refectory":"scene-visitors","place-grushenka-parlor":"bg_grushenka_parlor","place-katerina-lodging":"bg_katerina_lodging","monastery_copse":"scene-arrival","monastery_garden_night":"scene-arrival","skete_coffin_cell":"scene-bow","cemetery_stone":"bg_cemetery_stone","court":"bg_court_hall","fyodor_garden_window":"bg_garden_window_night","fyodor_lodge":"scene-family","grushenka_house":"bg_grushenka_parlor","hospital_ivan":"bg_hospital_ward","hospital_room":"bg_hospital_ward","investigation_room":"bg_investigation_room","ivan_rooms":"bg_ivan_hotel_room","mokroye_tavern":"bg_mokroye_tavern","perhotin_house":"scene-estate","place-schoolyard":"bg_schoolyard","place-town-street":"scene-estate","road_to_lyagavy":"bg_road_night","samsonov_house":"bg_merchant_house","smerdyakov_lodge":"bg_smerdyakov_lodge","snegiryov_room":"bg_snegiryov_room","tavern":"bg_mokroye_tavern","town_ditch_bridge":"bg_bridge","place-childhood":"bg_child_hearth","place-willow-night":"bg_willow_night","servant_lodge":"bg_servant_lodge","quiet_tavern":"bg_quiet_tavern","seville_dungeon":"bg_seville_dungeon","kholokolov_house":"bg_khlokolov_lise","kolya_street":"bg_kolya_street"};
+var RIGHT={"fyodor":1,"zosima":1,"miusov":1,"khokhlakov":1,"grushenka":1,"katerina":1,"kirillovitch":1,"devil":1,"fetyukovitch":1};
+
+/* 场景元数据：{place,time,mood} —— 由 production/scene-meta.json 内联补齐 */
+var SCENE_META={"s1":{"place":"小城卡拉马佐夫家旧宅客厅","time":"多年前","mood":"空荡老宅，光线昏黄，旧家具蒙尘，静默压抑。"},"s2":{"place":"小城卡拉马佐夫家旧宅客厅","time":"多年前","mood":"同一空厅，午后斜光穿窗，气氛萧索。"},"s3":{"place":"修道院隐修所长老居室","time":"多年前至当日","mood":"小屋低矮，圣像前油灯长明，光线柔和，一片肃静。"},"s4":{"place":"通往修道院的道路","time":"当日上午","mood":"土路两旁白柳，晨风微凉，人声渐远。"},"s5":{"place":"修道院接待厅","time":"当日稍后","mood":"高顶厅堂，神父访客满座，空气局促，杯盏轻响。"},"s6":{"place":"修道院门廊","time":"当日稍后","mood":"石阶门外，乡妇成群，日光明亮，低声祈祷。"},"s7":{"place":"修道院会客室","time":"当日稍后","mood":"明亮内室，窗纱透白，桌椅整洁，气氛体面。"},"s8":{"place":"修道院会客室","time":"当日稍后","mood":"同一内室，午后光斜照，轮椅与矮几，气氛轻俏。"},"s9":{"place":"修道院接待厅","time":"当日稍后","mood":"厅堂重聚，烛影晃动，语声渐高，气氛紧张。"},"s10":{"place":"修道院接待厅","time":"当日稍后","mood":"同一厅堂，人声喧哗，门窗洞开，气氛骚动。"},"s11":{"place":"修道院接待厅","time":"当日稍后","mood":"厅堂骤然安静，只闻脚步与衣袂声，光线凝重。"},"sa1":{"place":"修道院院长斋堂","time":"当日午餐后","mood":"长桌杯盘狼藉，酒气与笑语交杂，喧闹轻佻。"},"sa2":{"place":"卡拉马佐夫家仆人小屋","time":"当日傍晚","mood":"灶间狭小，炊烟余温，灯火昏黄，雨声敲窗。"},"sa3":{"place":"小城郊外柳树下","time":"当夜","mood":"荒路孤柳，夜色浓云，风声呼啸，四下无人。"},"sa5":{"place":"格鲁申卡的会客厅","time":"当日稍后","mood":"华而不实的客厅，绒布沙发，灯光明亮，脂粉气浓。"},"sa4":{"place":"卡捷琳娜的寄宿寓所客厅","time":"当日稍后","mood":"整洁体面的寓所，白窗帘，光照明亮，气氛紧绷。"},"sa6":{"place":"隐修所长老居室","time":"翌日清晨","mood":"小屋寂静，晨辉透窗，药气与香烛味，气氛安详。"},"sa7":{"place":"斯涅吉辽夫家破屋","time":"数日后","mood":"低矮破屋，家徒四壁，光线昏暗，四壁寒酸。"},"sa8":{"place":"小学校园院墙下","time":"数日后","mood":"操场空地，灰墙斑驳，冷风萧瑟，孩子喧闹。"},"sa9":{"place":"霍赫拉科娃家客厅","time":"数日后","mood":"贵妇客厅，丝绒帷幔，暖灯轻柔，气氛精致。"},"p-supp-v3":{"place":"城郊酒馆单间","time":"当日午后","mood":"酒馆屏风后小桌，杯盘叮当，堂内人声嘈杂。"},"sa10":{"place":"城郊酒馆单间","time":"当日傍晚","mood":"酒馆屏风后小桌，两杯残酒，兄弟对坐，烛影摇红，气氛诡谲。"},"sa11":{"place":"城郊酒馆单间","time":"当日傍晚","mood":"同一酒馆，烛影更低，大法官的幻象在席间浮起，气氛迷幻。"},"p-supp-v67":{"place":"卡拉马佐夫家前室","time":"数日后","mood":"宅内过道，门外马车待发，光线暗淡，气氛匆促。"},"sa12":{"place":"隐修所长老居室","time":"数日之后","mood":"小屋窗明几净，油灯静燃，空气清明，气氛庄重。"},"b_s1":{"place":"隐修所灵堂小室","time":"翌日","mood":"白幔遮窗，烛火成行，药气弥漫，气氛肃穆压抑。"},"b_s2":{"place":"修道院小树林","time":"当日","mood":"林间苔径，树影斑驳，鸟鸣细碎，气氛空寂。"},"b_s3":{"place":"格鲁申卡家内室","time":"当日傍晚","mood":"暖阁灯亮，茶具温热，帘幕低垂，气氛柔缓。"},"b_s4":{"place":"修道院花园","time":"当夜","mood":"花园月色，花丛幽暗，虫鸣断续，气氛宁静恍惚。"},"b_s5":{"place":"萨姆索诺夫家大宅","time":"当日上午","mood":"商人宅邸高敞，家具厚重，光线偏暗，气氛市侩。"},"b_s6":{"place":"前往里亚戈维的乡路","time":"当日","mood":"旷野土路，荒草没膝，风声空旷，气氛奔波。"},"b_s7":{"place":"费奥多尔家花园窗外","time":"当夜","mood":"月下花园，树丛黑影，窗缝透光，气氛诡秘不安。"},"b_s8":{"place":"费奥多尔家花园墙外","time":"当夜","mood":"墙头苔藓，夜雾渐起，犬声远吠，气氛紧绷。"},"b_s9":{"place":"彼尔霍金的住所/店铺","time":"当夜","mood":"小城官员家小室，桌上摊着换开的钞票，灯火通明，门外马车待发，气氛匆促惊惶。"},"b_s10":{"place":"莫克罗耶旅店主厅","time":"当夜","mood":"同一厅内，舞影晃动，酒气蒸腾，气氛狂乱。"},"b_s11":{"place":"莫克罗耶旅店主厅","time":"翌日凌晨","mood":"厅内杯盘狼藉，人声低哑，窗色微青，气氛骤紧。"},"b_s12":{"place":"县城预审室","time":"当日白天","mood":"官署小屋，长桌冷硬，墨水瓶与卷宗，气氛冷硬逼人。"},"s-c1":{"place":"小城水沟石桥","time":"傍晚","mood":"石桥跨沟，两岸荒草，行人稀少，气氛清冷。"},"s-c2":{"place":"斯涅吉辽夫家破屋","time":"数日后","mood":"破屋内光线昏暗，旧木箱当桌，气氛窘迫。"},"s-c3":{"place":"斯涅吉辽夫家小屋内室","time":"数日后","mood":"病榻小室，窗光微弱，药味浓重，气氛凄清。"},"p-supp-xi15":{"place":"县城医院病房","time":"数日后","mood":"白墙病房，铁架病床，窗外灰白，气氛寂寥。"},"s-c4":{"place":"斯乜尔佳科夫家小屋","time":"数日之后","mood":"出租小屋一角，病床靠墙，炉火微弱，气氛阴冷。"},"s-c5":{"place":"斯乜尔佳科夫家小屋","time":"数日之后","mood":"同一小屋，窗影西斜，炉火将熄，气氛压抑。"},"s-c6":{"place":"斯乜尔佳科夫家小屋","time":"数日之后","mood":"小屋灯昏，墙角暗影，气氛死寂。"},"s-c7":{"place":"伊万租住的旅馆房间","time":"当夜","mood":"旅馆客房，灯芯摇晃，四壁空荡，气氛迷离不安。"},"s-c8":{"place":"斯乜尔佳科夫家小屋","time":"翌日","mood":"同一小屋，晨光惨白，炉火尽熄，气氛冰冷。"},"s-c9":{"place":"县城法庭","time":"审判日","mood":"法庭高敞，陪审席与旁听席满座，人声嗡嗡，气氛庄严。"},"s-c10":{"place":"县城法庭","time":"审判日","mood":"同一法庭，桌案卷宗堆叠，语声激昂，气氛胶着。"},"s-c11":{"place":"县城法庭","time":"审判日","mood":"法庭骤静，只闻宣读声，光线凝重，气氛紧绷。"},"s-c12":{"place":"医院病房","time":"判后数日","mood":"病房白墙，病床围帘，窗外树影，气氛疲惫而安静。"},"s-c13":{"place":"城郊墓地路旁石边","time":"数日后","mood":"墓地青草，路旁旧石，风过林梢，孩子们围坐，气氛清亮温厚。"}};
+var UICTX={"SAVE_VERSION":"vfull2-ui","beatContext":{"s1b1":{"speaker":"narrator","target":null,"focus":["fyodor"],"participants":["fyodor"],"relationKey":null},"s1b4":{"speaker":"narrator","target":null,"focus":["fyodor"],"participants":["fyodor"],"relationKey":null},"s2b1":{"speaker":"narrator","target":null,"focus":["grigory"],"participants":["grigory"],"relationKey":null},"s2b4":{"speaker":"dmitri","target":"fyodor","focus":["dmitri","fyodor"],"participants":["dmitri","fyodor"],"relationKey":"父子 · 争产积怨"},"s2b5":{"speaker":"fyodor","target":"dmitri","focus":["fyodor","dmitri"],"participants":["fyodor","dmitri"],"relationKey":"父子 · 争产积怨"},"s3b1":{"speaker":"narrator","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"s3b3":{"speaker":"zosima","target":"alyosha","focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":"师徒 · 庇护"},"s3b5":{"speaker":"alyosha","target":"zosima","focus":["alyosha","zosima"],"participants":["alyosha","zosima"],"relationKey":"师徒 · 信赖"},"s4b1":{"speaker":"narrator","target":null,"focus":["miusov"],"participants":["miusov"],"relationKey":null},"s4b2":{"speaker":"kalganov","target":"miusov","focus":["kalganov","miusov"],"participants":["kalganov","miusov"],"relationKey":null},"s4b5":{"speaker":"maximov","target":"miusov","focus":["maximov","miusov"],"participants":["maximov","miusov"],"relationKey":null},"s4b6":{"speaker":"miusov","target":null,"focus":["miusov"],"participants":["miusov"],"relationKey":null},"s5b1":{"speaker":"narrator","target":null,"focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":null},"s5b4":{"speaker":"fyodor","target":null,"focus":["fyodor","miusov"],"participants":["fyodor","miusov"],"relationKey":null},"s5b5":{"speaker":"miusov","target":"fyodor","focus":["miusov","fyodor"],"participants":["miusov","fyodor"],"relationKey":null},"s5b6":{"speaker":"fyodor","target":"miusov","focus":["fyodor","miusov"],"participants":["fyodor","miusov"],"relationKey":null},"s6b1":{"speaker":"narrator","target":null,"focus":["zosima"],"participants":["zosima","peasant"],"relationKey":null},"s6b3":{"speaker":"peasant","target":"zosima","focus":["peasant","zosima"],"participants":["peasant","zosima"],"relationKey":null},"s6b4":{"speaker":"zosima","target":"peasant","focus":["zosima","peasant"],"participants":["zosima","peasant"],"relationKey":null},"s7b1":{"speaker":"narrator","target":null,"focus":["khokhlakov","lise"],"participants":["khokhlakov","lise"],"relationKey":null},"s7b2":{"speaker":"khokhlakov","target":"zosima","focus":["khokhlakov","zosima"],"participants":["khokhlakov","zosima"],"relationKey":null},"s7b3":{"speaker":"zosima","target":"khokhlakov","focus":["zosima","khokhlakov"],"participants":["zosima","khokhlakov"],"relationKey":null},"s7b4":{"speaker":"khokhlakov","target":"zosima","focus":["khokhlakov","zosima"],"participants":["khokhlakov","zosima"],"relationKey":null},"s8b1":{"speaker":"narrator","target":null,"focus":["lise","alyosha"],"participants":["lise","alyosha"],"relationKey":null},"s8b2":{"speaker":"lise","target":"alyosha","focus":["lise","alyosha"],"participants":["lise","alyosha"],"relationKey":null},"s8b4":{"speaker":"lise","target":"alyosha","focus":["lise","alyosha"],"participants":["lise","alyosha"],"relationKey":null},"s9b1":{"speaker":"narrator","target":null,"focus":["zosima","ivan"],"participants":["zosima","ivan","fyodor","librarian"],"relationKey":null},"s9b2":{"speaker":"librarian","target":null,"focus":["ivan"],"participants":["librarian","ivan"],"relationKey":null},"s9b3":{"speaker":"ivan","target":"zosima","focus":["ivan","zosima"],"participants":["ivan","zosima"],"relationKey":null},"s9b4":{"speaker":"zosima","target":"ivan","focus":["zosima","ivan"],"participants":["zosima","ivan"],"relationKey":null},"s9b6":{"speaker":"fyodor","target":"ivan","focus":["fyodor","ivan"],"participants":["fyodor","ivan"],"relationKey":null},"s10b1":{"speaker":"narrator","target":null,"focus":["dmitri","zosima"],"participants":["dmitri","zosima"],"relationKey":null},"s10b2":{"speaker":"fyodor","target":"dmitri","focus":["fyodor","dmitri"],"participants":["fyodor","dmitri"],"relationKey":"父子 · 当众互揭"},"s10b4":{"speaker":"fyodor","target":"dmitri","focus":["fyodor","dmitri"],"participants":["fyodor","dmitri"],"relationKey":null},"s10b5":{"speaker":"dmitri","target":"fyodor","focus":["dmitri","fyodor"],"participants":["dmitri","fyodor"],"relationKey":"父子 · 当众互揭"},"s11b1":{"speaker":"narrator","target":null,"focus":["zosima","dmitri"],"participants":["zosima","dmitri"],"relationKey":null},"s11b4":{"speaker":"zosima","target":"dmitri","focus":["zosima","dmitri"],"participants":["zosima","dmitri"],"relationKey":"长老 ↔ 长兄 · 怜悯"},"s11b5":{"speaker":"dmitri","target":"zosima","focus":["dmitri","zosima"],"participants":["dmitri","zosima"],"relationKey":null},"sa1b1":{"speaker":"narrator","target":null,"focus":["miusov"],"participants":["miusov"],"relationKey":null},"sa1b2":{"speaker":"miusov","target":null,"focus":["miusov"],"participants":["miusov"],"relationKey":null},"sa1b4":{"speaker":"miusov","target":null,"focus":["miusov"],"participants":["miusov"],"relationKey":null},"sa2b1":{"speaker":"narrator","target":null,"focus":["grigory"],"participants":["grigory"],"relationKey":null,"mentioned":["fyodor","marfa","smerdyakov"]},"sa2b4":{"speaker":"grigory","target":null,"focus":["grigory"],"participants":["grigory"],"relationKey":null},"sa3b1":{"speaker":"narrator","target":null,"focus":["dmitri","alyosha"],"participants":["dmitri","alyosha"],"relationKey":null},"sa3b2":{"speaker":"dmitri","target":"alyosha","focus":["dmitri","alyosha"],"participants":["dmitri","alyosha"],"relationKey":"兄弟 · 倾诉"},"sa3b5":{"speaker":"dmitri","target":"alyosha","focus":["dmitri","alyosha"],"participants":["dmitri","alyosha"],"relationKey":null},"sa3b6":{"speaker":"alyosha","target":"dmitri","focus":["alyosha","dmitri"],"participants":["alyosha","dmitri"],"relationKey":"兄弟 · 倾听"},"sa5b1":{"speaker":"narrator","target":null,"focus":["fyodor","dmitri"],"participants":["fyodor","dmitri"],"relationKey":null},"sa5b3":{"speaker":"grushenka","target":null,"focus":["grushenka","fyodor","dmitri"],"participants":["grushenka","fyodor","dmitri"],"relationKey":"父子 · 争同一女"},"sa4b1":{"speaker":"narrator","target":null,"focus":["katerina","dmitri"],"participants":["katerina","dmitri"],"relationKey":null},"sa4b2":{"speaker":"katerina","target":"dmitri","focus":["katerina","dmitri"],"participants":["katerina","dmitri"],"relationKey":"未婚关系 · 紧张"},"sa4b3":{"speaker":"dmitri","target":"katerina","focus":["dmitri","katerina"],"participants":["dmitri","katerina"],"relationKey":"未婚关系 · 决裂边缘"},"sa4b5":{"speaker":"katerina","target":"dmitri","focus":["katerina","dmitri"],"participants":["katerina","dmitri"],"relationKey":"未婚关系 · 还钱"},"sa6b1":{"speaker":"narrator","target":null,"focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":null},"sa6b4":{"speaker":"zosima","target":"alyosha","focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":null},"sa7b1":{"speaker":"narrator","target":null,"focus":["snegiryov","alyosha"],"participants":["snegiryov","alyosha"],"relationKey":null},"sa7b3":{"speaker":"snegiryov","target":"alyosha","focus":["snegiryov","alyosha"],"participants":["snegiryov","alyosha"],"relationKey":null},"sa8b1":{"speaker":"narrator","target":null,"focus":["alyosha","ilyusha"],"participants":["alyosha","ilyusha"],"relationKey":null},"sa8b3":{"speaker":"alyosha","target":"ilyusha","focus":["alyosha","ilyusha"],"participants":["alyosha","ilyusha"],"relationKey":"阿辽沙 ↔ 孩子 · 初遇"},"sa9b1":{"speaker":"narrator","target":null,"focus":["lise","alyosha"],"participants":["lise","alyosha"],"relationKey":null,"mentioned":["khokhlakov","katerina","ivan"]},"sa9b4":{"speaker":"lise","target":"alyosha","focus":["lise","alyosha"],"participants":["lise","alyosha"],"relationKey":"阿辽沙 ↔ 莉兹 · 暧昧"},"psv3b1":{"speaker":"narrator","target":null,"focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"psv3b2":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":"兄弟 · 交心"},"psv3b5":{"speaker":"alyosha","target":"ivan","focus":["alyosha","ivan"],"participants":["alyosha","ivan"],"relationKey":null},"sa10b1":{"speaker":"narrator","target":null,"focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"sa10b2":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"sa10b4":{"speaker":"alyosha","target":"ivan","focus":["alyosha","ivan"],"participants":["alyosha","ivan"],"relationKey":"兄弟 · 立场对立"},"sa10b5":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"sa11b1":{"speaker":"narrator","target":null,"focus":[],"participants":[],"relationKey":null},"sa11b2":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"sa11b4":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"sa11b5":{"speaker":"alyosha","target":"ivan","focus":["alyosha","ivan"],"participants":["alyosha","ivan"],"relationKey":"兄弟 · 一吻"},"psv67b1":{"speaker":"narrator","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"psv67b2":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":"厨子 ↔ 伊万 · 撺掇"},"psv67b4":{"speaker":"ivan","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"sa12b1":{"speaker":"narrator","target":null,"focus":["zosima"],"participants":["zosima"],"relationKey":null},"sa12b2":{"speaker":"zosima","target":null,"focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":null},"sa12b4":{"speaker":"zosima","target":"alyosha","focus":["zosima","alyosha"],"participants":["zosima","alyosha"],"relationKey":null},"b_s1_b1":{"speaker":"narrator","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"b_s1_b3":{"speaker":"rakitin","target":"alyosha","focus":["rakitin","alyosha"],"participants":["rakitin","alyosha"],"relationKey":null},"b_s2_b1":{"speaker":"narrator","target":null,"focus":["alyosha","rakitin"],"participants":["alyosha","rakitin"],"relationKey":null},"b_s2_b2":{"speaker":"rakitin","target":"alyosha","focus":["rakitin","alyosha"],"participants":["rakitin","alyosha"],"relationKey":null},"b_s2_b4":{"speaker":"rakitin","target":"alyosha","focus":["rakitin","alyosha"],"participants":["rakitin","alyosha"],"relationKey":null},"b_s3_b1":{"speaker":"narrator","target":null,"focus":["grushenka","alyosha"],"participants":["grushenka","alyosha"],"relationKey":null},"b_s3_b2":{"speaker":"grushenka","target":"alyosha","focus":["grushenka","alyosha"],"participants":["grushenka","alyosha"],"relationKey":null},"b_s3_b3":{"speaker":"rakitin","target":"grushenka","focus":["rakitin","grushenka"],"participants":["rakitin","grushenka"],"relationKey":null},"b_s3_b5":{"speaker":"grushenka","target":"alyosha","focus":["grushenka","alyosha"],"participants":["grushenka","alyosha"],"relationKey":"格鲁申卡 ↔ 阿辽沙 · 柔软"},"b_s4_b1":{"speaker":"narrator","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"b_s4_b3":{"speaker":"narrator","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"b_s5_b1":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"b_s5_b2":{"speaker":"dmitri","target":"samsonov","focus":["dmitri","samsonov"],"participants":["dmitri","samsonov"],"relationKey":null},"b_s5_b3":{"speaker":"samsonov","target":"dmitri","focus":["samsonov","dmitri"],"participants":["samsonov","dmitri"],"relationKey":null},"b_s6_b1":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"b_s6_b3":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"b_s7_b1":{"speaker":"narrator","target":null,"focus":["dmitri","fyodor"],"participants":["dmitri","fyodor"],"relationKey":null},"b_s7_b3":{"speaker":"narrator","target":null,"focus":["dmitri","fyodor"],"participants":["dmitri","fyodor"],"relationKey":null},"b_s8_b1":{"speaker":"narrator","target":null,"focus":["dmitri","grigory"],"participants":["dmitri","grigory"],"relationKey":null},"b_s8_b2":{"speaker":"grigory","target":"dmitri","focus":["grigory","dmitri"],"participants":["grigory","dmitri"],"relationKey":"老仆 ↔ 长子 · 擒逃"},"b_s9_b1":{"speaker":"narrator","target":null,"focus":["dmitri","perhotin"],"participants":["dmitri","perhotin"],"relationKey":null},"b_s9_b2":{"speaker":"perhotin","target":"dmitri","focus":["perhotin","dmitri"],"participants":["perhotin","dmitri"],"relationKey":"官员 ↔ 嫌疑人"},"b_s9_b3":{"speaker":"dmitri","target":"perhotin","focus":["dmitri","perhotin"],"participants":["dmitri","perhotin"],"relationKey":null},"b_s10_b1":{"speaker":"narrator","target":null,"focus":["grushenka","dmitri"],"participants":["grushenka","dmitri"],"relationKey":null},"b_s10_b3":{"speaker":"grushenka","target":"dmitri","focus":["grushenka","dmitri"],"participants":["grushenka","dmitri"],"relationKey":null},"b_s11_b1":{"speaker":"narrator","target":null,"focus":["dmitri","kirillovitch"],"participants":["dmitri","kirillovitch"],"relationKey":null},"b_s11_b3":{"speaker":"grushenka","target":"dmitri","focus":["grushenka","dmitri"],"participants":["grushenka","dmitri"],"relationKey":null},"b_s12_b1":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"b_s12_b2":{"speaker":"nikolay_parfenovitch","target":"dmitri","focus":["nikolay_parfenovitch","dmitri"],"participants":["nikolay_parfenovitch","dmitri"],"relationKey":"审讯者 ↔ 嫌疑人"},"b_s12_b3":{"speaker":"dmitri","target":"nikolay_parfenovitch","focus":["dmitri","nikolay_parfenovitch"],"participants":["dmitri","nikolay_parfenovitch"],"relationKey":null},"b_s12_b4":{"speaker":"kirillovitch","target":"dmitri","focus":["kirillovitch","dmitri"],"participants":["kirillovitch","dmitri"],"relationKey":"公诉 ↔ 被告"},"b_s12_b5":{"speaker":"dmitri","target":"kirillovitch","focus":["dmitri","kirillovitch"],"participants":["dmitri","kirillovitch"],"relationKey":null},"s-c1b1":{"speaker":"narrator","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"s-c1b3":{"speaker":"alyosha","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":null},"s-c1b5":{"speaker":"alyosha","target":"ilyusha","focus":["alyosha","ilyusha"],"participants":["alyosha","ilyusha"],"relationKey":null},"s-c2b1":{"speaker":"narrator","target":null,"focus":["alyosha","snegiryov"],"participants":["alyosha","snegiryov"],"relationKey":null},"s-c2b2":{"speaker":"snegiryov","target":"alyosha","focus":["snegiryov","alyosha"],"participants":["snegiryov","alyosha"],"relationKey":null},"s-c2b4":{"speaker":"snegiryov","target":"alyosha","focus":["snegiryov","alyosha"],"participants":["snegiryov","alyosha"],"relationKey":"大尉 ↔ 伊柳沙 · 父子"},"s-c2b6":{"speaker":"alyosha","target":"snegiryov","focus":["alyosha","snegiryov"],"participants":["alyosha","snegiryov"],"relationKey":"阿辽沙 ↔ 大尉 · 许诺"},"s-c3b1":{"speaker":"narrator","target":null,"focus":["krassotkin"],"participants":["krassotkin"],"relationKey":null},"s-c3b2":{"speaker":"krassotkin","target":null,"focus":["krassotkin"],"participants":["krassotkin"],"relationKey":null},"psx15b1":{"speaker":"narrator","target":null,"focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"psx15b5":{"speaker":"ivan","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"s-c4b1":{"speaker":"narrator","target":null,"focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c4b3":{"speaker":"ivan","target":"smerdyakov","focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c4b4":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":null},"s-c5b1":{"speaker":"narrator","target":null,"focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c5b2":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":"伊万 ↔ 斯乜尔佳科夫 · 逼问"},"s-c5b3":{"speaker":"ivan","target":"smerdyakov","focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c5b4":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":null},"s-c6b1":{"speaker":"narrator","target":null,"focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c6b2":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":"伊万 ↔ 斯乜尔佳科夫 · 对质"},"s-c6b5":{"speaker":"ivan","target":"smerdyakov","focus":["ivan","smerdyakov"],"participants":["ivan","smerdyakov"],"relationKey":null},"s-c6b6":{"speaker":"smerdyakov","target":"ivan","focus":["smerdyakov","ivan"],"participants":["smerdyakov","ivan"],"relationKey":null},"s-c7b1":{"speaker":"narrator","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"s-c7b2":{"speaker":"devil","target":"ivan","focus":["devil","ivan"],"participants":["devil","ivan"],"relationKey":"伊万 ↔ 心魔"},"s-c7b4":{"speaker":"ivan","target":"devil","focus":["ivan","devil"],"participants":["ivan","devil"],"relationKey":null},"s-c8b1":{"speaker":"narrator","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"s-c8b3":{"speaker":"ivan","target":null,"focus":["ivan"],"participants":["ivan"],"relationKey":null},"s-c9b1":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"s-c9b4":{"speaker":"katerina","target":null,"focus":["katerina"],"participants":["katerina"],"relationKey":null},"s-c10b1":{"speaker":"kirillovitch","target":null,"focus":["kirillovitch"],"participants":["kirillovitch"],"relationKey":"公诉 ↔ 被告"},"s-c10b3":{"speaker":"fetyukovitch","target":null,"focus":["fetyukovitch"],"participants":["fetyukovitch"],"relationKey":"辩护 ↔ 被告"},"s-c11b1":{"speaker":"narrator","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"s-c11b3":{"speaker":"dmitri","target":null,"focus":["dmitri"],"participants":["dmitri"],"relationKey":null},"s-c12b1":{"speaker":"narrator","target":null,"focus":["ivan"],"participants":["ivan","alyosha"],"relationKey":null,"mentioned":["dmitri"]},"s-c12b4":{"speaker":"ivan","target":"alyosha","focus":["ivan","alyosha"],"participants":["ivan","alyosha"],"relationKey":null},"s-c13b1":{"speaker":"narrator","target":null,"focus":["snegiryov","ilyusha"],"participants":["snegiryov","ilyusha"],"relationKey":null},"s-c13b2":{"speaker":"alyosha","target":null,"focus":["alyosha"],"participants":["alyosha"],"relationKey":"阿辽沙 ↔ 科利亚 · 少年和解"},"s-c13b5":{"speaker":"krassotkin","target":"alyosha","focus":["krassotkin","alyosha"],"participants":["krassotkin","alyosha"],"relationKey":null}},"relationReveals":[{"beatId":"s2b4","speaker":"fyodor","target":"dmitri","minIndex":3,"unlockArc":"a1","label":"父子 · 争产积怨"},{"beatId":"s2b5","speaker":"fyodor","target":"dmitri","minIndex":4,"unlockArc":"a1","label":"父子 · 争产积怨"},{"beatId":"s3b3","speaker":"zosima","target":"alyosha","minIndex":6,"unlockArc":"a1","label":"师徒 · 庇护"},{"beatId":"s3b5","speaker":"alyosha","target":"zosima","minIndex":7,"unlockArc":"a1","label":"师徒 · 信赖"},{"beatId":"s10b2","speaker":"fyodor","target":"dmitri","minIndex":32,"unlockArc":"a2","label":"父子 · 当众互揭"},{"beatId":"s10b5","speaker":"dmitri","target":"fyodor","minIndex":34,"unlockArc":"a2","label":"父子 · 当众互揭"},{"beatId":"s11b4","speaker":"zosima","target":"dmitri","minIndex":36,"unlockArc":"a2","label":"长老 ↔ 长兄 · 怜悯"},{"beatId":"sa3b2","speaker":"dmitri","target":"alyosha","minIndex":44,"unlockArc":"a3","label":"兄弟 · 倾诉"},{"beatId":"sa3b6","speaker":"alyosha","target":"dmitri","minIndex":46,"unlockArc":"a3","label":"兄弟 · 倾听"},{"beatId":"sa5b3","speaker":"fyodor","target":"dmitri","minIndex":48,"unlockArc":"a3","label":"父子 · 争同一女"},{"beatId":"sa4b2","speaker":"katerina","target":"dmitri","minIndex":50,"unlockArc":"a3","label":"未婚关系 · 紧张"},{"beatId":"sa4b3","speaker":"dmitri","target":"katerina","minIndex":51,"unlockArc":"a3","label":"未婚关系 · 决裂边缘"},{"beatId":"sa4b5","speaker":"katerina","target":"dmitri","minIndex":52,"unlockArc":"a3","label":"未婚关系 · 还钱"},{"beatId":"sa8b3","speaker":"alyosha","target":"ilyusha","minIndex":58,"unlockArc":"a4","label":"阿辽沙 ↔ 孩子 · 初遇"},{"beatId":"sa9b4","speaker":"lise","target":"alyosha","minIndex":60,"unlockArc":"a4","label":"阿辽沙 ↔ 莉兹 · 暧昧"},{"beatId":"psv3b2","speaker":"ivan","target":"alyosha","minIndex":62,"unlockArc":"a5","label":"兄弟 · 交心"},{"beatId":"sa10b4","speaker":"alyosha","target":"ivan","minIndex":66,"unlockArc":"a5","label":"兄弟 · 立场对立"},{"beatId":"sa11b5","speaker":"alyosha","target":"ivan","minIndex":71,"unlockArc":"a5","label":"兄弟 · 一吻"},{"beatId":"psv67b2","speaker":"smerdyakov","target":"ivan","minIndex":73,"unlockArc":"a5","label":"厨子 ↔ 伊万 · 撺掇"},{"beatId":"b_s3_b5","speaker":"grushenka","target":"alyosha","minIndex":86,"unlockArc":"a7","label":"格鲁申卡 ↔ 阿辽沙 · 柔软"},{"beatId":"b_s8_b2","speaker":"grigory","target":"dmitri","minIndex":97,"unlockArc":"a8","label":"老仆 ↔ 长子 · 擒逃"},{"beatId":"b_s9_b2","speaker":"perhotin","target":"dmitri","minIndex":99,"unlockArc":"a8","label":"官员 ↔ 嫌疑人"},{"beatId":"b_s12_b2","speaker":"nikolay_parfenovitch","target":"dmitri","minIndex":106,"unlockArc":"a9","label":"审讯者 ↔ 嫌疑人"},{"beatId":"b_s12_b4","speaker":"kirillovitch","target":"dmitri","minIndex":108,"unlockArc":"a9","label":"公诉 ↔ 被告"},{"beatId":"s-c2b4","speaker":"snegiryov","target":"ilyusha","minIndex":115,"unlockArc":"a10","label":"大尉 ↔ 伊柳沙 · 父子"},{"beatId":"s-c2b6","speaker":"alyosha","target":"snegiryov","minIndex":116,"unlockArc":"a10","label":"阿辽沙 ↔ 大尉 · 许诺"},{"beatId":"s-c5b2","speaker":"smerdyakov","target":"ivan","minIndex":125,"unlockArc":"a11","label":"伊万 ↔ 斯乜尔佳科夫 · 逼问"},{"beatId":"s-c6b2","speaker":"smerdyakov","target":"ivan","minIndex":129,"unlockArc":"a11","label":"伊万 ↔ 斯乜尔佳科夫 · 对质"},{"beatId":"s-c7b2","speaker":"devil","target":"ivan","minIndex":133,"unlockArc":"a11","label":"伊万 ↔ 心魔"},{"beatId":"s-c10b1","speaker":"kirillovitch","target":"dmitri","minIndex":139,"unlockArc":"a12","label":"公诉 ↔ 被告"},{"beatId":"s-c10b3","speaker":"fetyukovitch","target":"dmitri","minIndex":140,"unlockArc":"a12","label":"辩护 ↔ 被告"},{"beatId":"s-c13b2","speaker":"alyosha","target":"krassotkin","minIndex":146,"unlockArc":"a12","label":"阿辽沙 ↔ 科利亚 · 少年和解"}],"characterReveals":{"fyodor":[{"minArc":"a1","facts":["破落地主，白手攒下家产","两次丧妻，三子疏于照管"]},{"minArc":"a2","facts":["在修道院席间扮丑角","当众与长子德米特里冲突"]},{"minArc":"a3","facts":["与亲儿德米特里争夺同一女人格鲁申卡"]}],"dmitri":[{"minArc":"a1","facts":["长子米嘉，由老仆养大","向父亲追讨母亲遗产"]},{"minArc":"a2","facts":["在修道院闯入，与父公开冲突"]},{"minArc":"a3","facts":["曾对卡捷琳娜负心","与父争格鲁申卡"]},{"minArc":"a8","facts":["为三千卢布四处筹款","夜闯父宅，伤老仆后逃走"]},{"minArc":"a9","facts":["被预审指控弑父，坚称无辜"]}],"ivan":[{"minArc":"a2","facts":["次子，就教会与国家之辩发言"]},{"minArc":"a5","facts":["与阿辽沙酒馆交心","抛出叛逆与宗教大法官之论"]},{"minArc":"a11","facts":["病中疑惧，三访斯乜尔佳科夫","承认曾盼父亲死"]}],"alyosha":[{"minArc":"a1","facts":["三子，修道院见习修士","师从佐西马长老"]},{"minArc":"a2","facts":["在修道院风波中旁观调和"]},{"minArc":"a7","facts":["长老死后动摇，经迦拿之梦重立"]},{"minArc":"a10","facts":["走近小学生，照料伊柳沙一家"]}],"zosima":[{"minArc":"a1","facts":["城中德高望重的长老","对阿辽沙以光相勉"]},{"minArc":"a2","facts":["向农妇、贵妇祝福","伏地向德米特里一拜"]},{"minArc":"a4","facts":["领终傅，作最后教诲"]},{"minArc":"a6","facts":["追述生平：为一切人有罪","嘱以不停歇的爱"]}],"katerina":[{"minArc":"a3","facts":["德米特里的未婚妻","受其羞辱后仍自矜"]},{"minArc":"a9","facts":["牵涉三千卢布的来历"]},{"minArc":"a12","facts":["庭上提交德米特里亲笔信"]}],"grushenka":[{"minArc":"a3","facts":["本地富孀，父子争夺的对象"]},{"minArc":"a7","facts":["对阿辽沙露出柔软一面"]},{"minArc":"a8","facts":["在莫克罗耶与米嘉重逢"]}],"smerdyakov":[{"minArc":"a3","facts":["费奥多尔家厨子","身世有私生传闻"]},{"minArc":"a5","facts":["低声撺掇伊万离城"]},{"minArc":"a11","facts":["与伊万三番对质","承认是自己动了手"]}],"ilyusha":[{"minArc":"a4","facts":["被同学欺凌的小学生"]},{"minArc":"a10","facts":["因父亲受辱一病不起"]}],"snegiryov":[{"minArc":"a4","facts":["落魄大尉，当街被米嘉羞辱"]},{"minArc":"a10","facts":["父子相依，家境赤贫"]}],"krassotkin":[{"minArc":"a10","facts":["自负的小学生科利亚","训出小狗佩列兹旺"]}],"rakitin":[{"minArc":"a7","facts":["势利的神学校同学"]}],"grigory":[{"minArc":"a1","facts":["费奥多尔家老仆"]},{"minArc":"a8","facts":["夜擒逃院的德米特里"]}],"miusov":[{"minArc":"a2","facts":["远亲监护人，陪同意外赴修道院"]}],"khokhlakov":[{"minArc":"a2","facts":["孀居贵妇，携病女莉兹"]}],"lise":[{"minArc":"a2","facts":["霍赫拉科娃之女，轮椅","向阿辽沙递便条"]}],"samsonov":[{"minArc":"a8","facts":["老商人，被米嘉求款"]}],"perhotin":[{"minArc":"a8","facts":["地方青年官员，察觉异常"]}],"kirillovitch":[{"minArc":"a9","facts":["检察官，主审公诉"]}],"fetyukovitch":[{"minArc":"a12","facts":["彼得堡来的名辩护律师"]}],"nikolay_parfenovitch":[{"minArc":"a9","facts":["预审推事"]}],"devil":[{"minArc":"a11","facts":["伊万高烧中的幻象"]}]},"stats":{"beats":148,"dialogueBeats":94,"beatsWithTarget":76,"narrationFocusBeats":52,"characterCount":22,"revealStages":45,"relationPairs":24,"relationRules":32,"relationTaggedBeats":32}};
+var state={idx:0,seen:[],log:[],ended:false,autoTimer:null,farthestArc:0,lastSceneId:null,firstRender:false,cardTimer:null};
+/* 人物首次在画面中登场的节拍（只算在场者，不算被提及） */
+var FIRST_ON_STAGE=(function(){var m={};BEATS.forEach(function(b,i){var c=(UICTX.beatContext&&UICTX.beatContext[b.id])||{};var ppl=(c.focus||[]).concat(c.participants||[]);if(!c.focus&&!c.participants)ppl=ppl.concat(b.cast||[]);if(b.sp&&b.sp!=="narrator")ppl.push(b.sp);ppl.forEach(function(id){if(id&&m[id]===undefined)m[id]=i;});});return m;})();
+if(typeof FIRST_ON_STAGE!=="undefined"&&!("marfa" in FIRST_ON_STAGE))FIRST_ON_STAGE.marfa=FIRST_ON_STAGE.grigory||0;
+var $=function(id){return document.getElementById(id);};
+
+function beatIndexById(id){for(var i=0;i<BEATS.length;i++)if(BEATS[i].id===id)return i;return 0;}
+function resolveOldBeatId(oldId){for(var i=0;i<BEATS.length;i++){if((BEATS[i].srcIds||[]).indexOf(oldId)>=0)return i;}return -1;}
+function arcFirstBeat(arcId){for(var i=0;i<BEATS.length;i++)if(BEATS[i].arc===arcId)return i;return 0;}
+
+function save(){
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({v:SAVE_VER,beatId:BEATS[state.idx].id,seen:state.seen,log:state.log,ended:state.ended,farthestArc:state.farthestArc}));}catch(e){}
+}
+function loadSave(){
+ try{var raw=localStorage.getItem(SAVE_KEY);if(!raw)return null;
+  var o=JSON.parse(raw);
+  if(!o||o.v!==SAVE_VER||typeof o.beatId!=="string"||!Array.isArray(o.log))return null;return o;}
+ catch(e){return null;}
+}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+
+function bgFile(key){return BGMAP[key]||"scene-family";}
+function showBg(img){
+ document.querySelectorAll("#bg .bg-img").forEach(function(el){
+   el.classList.toggle("on", el.dataset.bg===img);
+ });
+ var act=document.querySelector('#bg .bg-img.on'); var blur=$("bgBlur"); blur.innerHTML="";
+ if(act){ var c=act.cloneNode(true); c.removeAttribute("style"); c.removeAttribute("class");
+   c.className=""; c.style.display="block"; blur.appendChild(c); }
+}
+function updateBadge(b){
+ var m=SCENE_META[b.sc]||{};var el=$("badge");el.innerHTML="";
+ var line=document.createElement("div");line.className="sceneLine";line.textContent=(m.place||"")+(m.time?" · "+m.time:"");el.appendChild(line);
+ if(m.mood){var mood=document.createElement("div");mood.className="sceneMood";mood.textContent=m.mood;el.appendChild(mood);}
+}
+function sceneCardOpen(){return false;}
+function dismissSceneCard(){}
+function maybeSceneCard(b){state.lastSceneId=b.sc;}
+function showSceneCard(sc){}
+/* 文本直接显示 */
+var _revealed=true,_tt=null;
+function typeText(full,isNarr){if(_tt){clearInterval(_tt);_tt=null;} _revealed=true;$("text").textContent=full;}
+function revealAll(){_revealed=true;var b=BEATS[state.idx];$("text").textContent=b.txt;}
+function renderBeat(){
+ var b=BEATS[state.idx]; if(!b){showEnd();return;}
+ showBg(bgFile(b.bg));
+ var stage=$("stage");
+ var isNarr=(b.sp==="narrator");
+ stage.classList.toggle("speaking",!isNarr);
+ stage.classList.toggle("narr",isNarr);
+ var mode=(typeof BEAT_MODES!=="undefined"&&BEAT_MODES[b.id])||"";
+ ["flashback","dream","vision"].forEach(function(mo){stage.classList.remove(mo);if(mode===mo)stage.classList.add(mo);});
+ var mt=$("modeTag");mt.className="";mt.textContent="";
+ if(mode==="flashback"){mt.className="on f";mt.textContent="〔闪回 · 往事〕";}
+ else if(mode==="dream"){mt.className="on d";mt.textContent="〔梦境〕";}
+ else if(mode==="vision"){mt.className="on v";mt.textContent="〔诗中幻象〕";}
+ renderFocus(b);
+ renderProg();
+ updateBadge(b);
+ maybeSceneCard(b);
+ var nm=$("name");
+ if(isNarr){nm.textContent="旁白";nm.className="narr";}
+ else{nm.textContent=SPN[b.sp]||b.sp;nm.className="";}
+ nm.setAttribute("data-sp",b.sp);
+ $("dlg").classList.toggle("narr",isNarr);
+ typeText(b.txt,isNarr);
+ $("leadNarr").textContent=(b.lead||"");
+ $("tailNarr").textContent=(b.tail||"");
+ $("next").classList.remove("show");
+ $("prevBtn").disabled=state.idx<=0;
+ if($("nextBtn"))$("nextBtn").disabled=false;
+ var ai=ARCS.findIndex(function(a){return a.id===b.arc;});
+ if(ai>state.farthestArc)state.farthestArc=ai;
+}
+
+/* 每拍时长（秒）：clamp(3.2,16, 全部可见汉字数/4.5+1.6) */
+function visibleTxt(b){return ((b.lead||""))+(b.txt||"")+((b.tail||""));}
+function beatDurOf(b){var t=visibleTxt(b);var n=(t.replace(/\s/g,"")).length;var s=n/4.5+1.6;return Math.min(16,Math.max(3.2,s));}
+function beatDur(txt){var n=(txt.match(/[\u4e00-\u9fa5]/g)||[]).length;var s=n/4.5+1.6;return Math.min(16,Math.max(3.2,s));}
+function totalSec(){var t=0;for(var i=0;i<BEATS.length;i++)t+=beatDurOf(BEATS[i]);return t;}
+function fmtMin(s){return Math.max(1,Math.round(s/60))+" 分钟";}
+
+function renderProg(){
+ var b=BEATS[state.idx];
+ var ai=ARCS.findIndex(function(a){return a.id===b.arc;});
+ var pct=Math.round((state.idx/(BEATS.length-1))*100);
+ $("progFill").style.width=pct+"%";
+ var rem=0;for(var i=state.idx+1;i<BEATS.length;i++)rem+=beatDurOf(BEATS[i]);
+ $("menuProg").textContent="篇章 "+(ai+1)+"/12 · "+ARCS[ai].title+"　全剧 "+pct+"%（"+(state.idx+1)+"/"+BEATS.length+"）· 剩余约"+fmtMin(rem);
+ var pa=document.querySelector("#progBtn .pArc"),pt=document.querySelector("#progBtn .pTitle"),pn=document.querySelector("#progBtn .pNum");
+ var _ct={};(window.STORY_EXTRAS&&STORY_EXTRAS.chapters||[]).forEach(function(c){_ct[c.id]=c.title;});
+ if(pa)pa.textContent=_ct[ARCS[ai].id]||ARCS[ai].title;if(pt)pt.textContent="";
+ var arcId=ARCS[ai].id;var start=0,end=BEATS.length;
+ for(var k=0;k<BEATS.length;k++){/*placeholder*/}
+ if(pn)pn.textContent="第"+(ai+1)+"部 · "+ARCS[ai].title;
+}
+
+function renderFocus(b){
+ var box=$("focus");box.innerHTML="";box.className="";
+ var ctx=(UICTX.beatContext&&UICTX.beatContext[b.id])||{};
+ var sp=ctx.speaker||b.sp,ppl=[];
+ if(sp==="narrator"){
+   var nf=(ctx.focus||[]).slice(0,2);box.classList.add("narrative");if(nf.length===1)box.classList.add("solo");
+   nf.forEach(function(id){addFocusPerson(box,id,false);ppl.push(id);});
+ }else{
+   if(!ctx.target)box.classList.add("solo");
+   addFocusPerson(box,sp,true);ppl.push(sp);
+   if(ctx.target){
+     if(ctx.relationKey){var rel=document.createElement("div");rel.className="relTag";rel.textContent=ctx.relationKey;box.appendChild(rel);}
+     addFocusPerson(box,ctx.target,false);ppl.push(ctx.target);
+   }
+ }
+ $("dialogDock").classList.toggle("nofocus",ppl.length===0);
+ var _pb=$("peopleBtn");if(_pb)_pb.classList.toggle("hasNew",ppl.some(function(id){return FIRST_ON_STAGE[id]===state.idx;}));
+}
+function shortPersonName(id){var n=SPN[id]||id;var short={fyodor:"费奥多尔",dmitri:"米嘉",ivan:"伊万",alyosha:"阿辽沙",zosima:"佐西马",grushenka:"格鲁申卡",katerina:"卡捷琳娜",smerdyakov:"斯乜尔佳科夫",grigory:"格里戈里",nikolay_parfenovitch:"预审推事",kirillovitch:"检察官",fetyukovitch:"辩护律师",krassotkin:"科利亚",khokhlakov:"霍赫拉科娃",snegiryov:"斯涅吉辽夫",perhotin:"彼尔霍金"};return short[id]||n.replace(/（.*?）/g,"").slice(0,8);}
+function addFocusPerson(box,id,isSpeaker){
+ var d=document.createElement("div");d.className="fp"+(isSpeaker?" speaker":" target");d.dataset.id=id;d.setAttribute("role","button");d.tabIndex=0;
+ var ava=document.createElement("div");ava.className="ava";
+ var node=document.querySelector('#bg .port-img[data-p="'+id+'"]');
+ if(node){var img=node.cloneNode(true);img.removeAttribute("class");img.style.display="block";img.alt=SPN[id]||id;ava.appendChild(img);}
+ else{var ini=document.createElement("div");ini.className="ini";ini.textContent=shortPersonName(id).charAt(0);ava.appendChild(ini);}
+ if(FIRST_ON_STAGE[id]===state.idx){var f=document.createElement("span");f.className="first";f.textContent="初登场";ava.appendChild(f);d.title="初次登场 · 点击查看人物";}
+ d.appendChild(ava);
+ var nm=document.createElement("span");nm.className="nm";nm.textContent=shortPersonName(id);nm.title=SPN[id]||id;d.appendChild(nm);
+ d.onclick=function(e){e.stopPropagation();stopAuto();openCodex(id);};
+ box.appendChild(d);
+}
+
+function encounteredIds(){
+ var ids=[];
+ for(var i=0;i<=state.idx;i++){
+  var b=BEATS[i],ctx=(UICTX.beatContext&&UICTX.beatContext[b.id])||{};
+  (b.rev||[]).concat(ctx.focus||[],ctx.participants||[],b.sp!=="narrator"?[b.sp]:[]).forEach(function(id){if(id&&id!=="narrator"&&ids.indexOf(id)<0)ids.push(id);});
+ }
+ return ids;
+}
+function previous(){
+ if(isOverlayOpen()||state.idx<=0)return;
+ stopAuto();if(state.log.length)state.log.pop();state.idx--;state.lastSceneId=BEATS[state.idx].sc;save();renderBeat();
+}
+function knownRelations(){
+ var seen=encounteredIds();return (UICTX.relationReveals||[]).filter(function(r){return r.minIndex<=state.idx&&seen.indexOf(r.speaker)>=0&&seen.indexOf(r.target)>=0;});
+}
+var MAP_FILTER="all",MAP_SELECTED=null;
+var MAP_TYPES={family:{name:"家族与抚养",color:"#647f99"},love:{name:"情感与金钱",color:"#bd6573"},faith:{name:"信仰与关怀",color:"#438c79"},case:{name:"冲突与案件",color:"#b88735"}};
+function relationType(r){var s=r.label||"";if(/父子|兄弟|长兄|孩子|老仆/.test(s))return"family";if(/未婚|女|暧昧|柔软/.test(s))return"love";if(/师徒|怜悯|信赖|许诺|一吻|少年/.test(s))return"faith";return"case";}
+function mapGroup(id){if(["grushenka","katerina","perhotin","samsonov","kirillovitch","fetyukovitch","nikolay_parfenovitch"].indexOf(id)>=0)return"left";if(["fyodor","dmitri","ivan","alyosha","smerdyakov","grigory","marfa"].indexOf(id)>=0)return"center";return"right";}
+function mapRole(id){var stages=(UICTX.characterReveals&&UICTX.characterReveals[id])||[];var f=stages.length&&stages[0].facts&&stages[0].facts[0];return f||"已进入故事";}
+function renderMapDetail(ids,rels){var d=$("mapDetail");d.innerHTML="";if(!MAP_SELECTED||ids.indexOf(MAP_SELECTED)<0){d.innerHTML='<h3>阅读这张关系图</h3><p>人物按故事中的作用分成三组。点击人物，只保留与他相关的已知联系；再点一次返回总览。</p><p>关系只显示到当前阅读位置，不提前揭示后续。</p>';return;}var id=MAP_SELECTED;var h=document.createElement("h3");h.textContent=SPN[id]||id;d.appendChild(h);var p=document.createElement("p");p.textContent=mapRole(id);d.appendChild(p);var related=rels.filter(function(r){return r.speaker===id||r.target===id;});if(!related.length){var e=document.createElement("p");e.textContent="当前进度尚未揭示更多关系。";d.appendChild(e);}related.forEach(function(r){var other=r.speaker===id?r.target:r.speaker,b=document.createElement("button");b.innerHTML='<strong>'+shortPersonName(other)+'</strong><br><span>'+r.label+'</span>';b.onclick=function(){MAP_SELECTED=other;openRelationMap();};d.appendChild(b);});var more=document.createElement("button");more.textContent="查看此刻人物志";more.onclick=function(){$("mapOv").classList.remove("open");openCodex(id);};d.appendChild(more);}
+function openRelationMap(){
+ stopAuto();var host=$("relationMap");host.innerHTML="";var allSeen=encounteredIds().filter(function(id){return !!SPN[id];});var knownAll=knownRelations();var connected=[];knownAll.forEach(function(r){[r.speaker,r.target].forEach(function(id){if(allSeen.indexOf(id)>=0&&connected.indexOf(id)<0)connected.push(id);});});allSeen.forEach(function(id){if(connected.indexOf(id)<0)connected.push(id);});var ids=connected.slice(0,16);var rels=knownAll.filter(function(r){return ids.indexOf(r.speaker)>=0&&ids.indexOf(r.target)>=0&&(MAP_FILTER==="all"||relationType(r)===MAP_FILTER);});
+ $("mapSub").textContent="读到此处 · "+ids.length+" 位人物 · "+rels.length+" 条关系";
+ var fs=$("mapFilters");fs.innerHTML="";[{id:"all",name:"全部"}].concat(Object.keys(MAP_TYPES).map(function(k){return{id:k,name:MAP_TYPES[k].name};})).forEach(function(o){var b=document.createElement("button");b.className="mapFilter"+(MAP_FILTER===o.id?" on":" ");b.textContent=o.name;if(MAP_TYPES[o.id])b.style.setProperty("--map-color",MAP_TYPES[o.id].color);b.onclick=function(){MAP_FILTER=o.id;MAP_SELECTED=null;openRelationMap();};fs.appendChild(b);});
+ var lg=$("mapLegend");lg.innerHTML="";Object.keys(MAP_TYPES).forEach(function(k){var s=document.createElement("span");s.innerHTML='<i style="--c:'+MAP_TYPES[k].color+'"></i>'+MAP_TYPES[k].name;lg.appendChild(s);});
+ if(ids.length<2){host.innerHTML='<div class="mapEmpty">继续阅读后，登场人物与他们的关系会在这里逐步展开。</div>';renderMapDetail(ids,rels);$("mapOv").classList.add("open");return;}
+ var NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg"),w=920,h=560,pos={};svg.setAttribute("viewBox","0 0 "+w+" "+h);var cols={left:170,center:460,right:750},groups={left:[],center:[],right:[]};ids.forEach(function(id){groups[mapGroup(id)].push(id);});Object.keys(groups).forEach(function(g){var list=groups[g],step=h/(list.length+1);list.forEach(function(id,i){pos[id]={x:cols[g],y:step*(i+1)};});var label=document.createElementNS(NS,"text");label.setAttribute("x",cols[g]);label.setAttribute("y",24);label.setAttribute("text-anchor","middle");label.setAttribute("class","groupLabel");label.textContent={left:"欲望与冲突",center:"卡拉马佐夫家族",right:"信仰与日常"}[g];svg.appendChild(label);});
+ var selected=MAP_SELECTED,uniq={};rels.forEach(function(r){var key=[r.speaker,r.target].sort().join("|")+"|"+r.label;if(uniq[key])return;uniq[key]=1;var p=pos[r.speaker],q=pos[r.target];if(!p||!q)return;var type=relationType(r),midX=(p.x+q.x)/2,curve=(p.y+q.y)/2+(p.x===q.x?32:0);var path=document.createElementNS(NS,"path");path.setAttribute("d","M"+p.x+","+p.y+" Q"+midX+","+curve+" "+q.x+","+q.y);path.setAttribute("class","mapEdge"+((selected&&r.speaker!==selected&&r.target!==selected)?" faded":selected?" focused":""));path.setAttribute("stroke",MAP_TYPES[type].color);svg.appendChild(path);});
+ ids.forEach(function(id){var p=pos[id],g=document.createElementNS(NS,"g");g.setAttribute("class","mapNode"+(selected===id?" selected":"")+(selected&&!rels.some(function(r){return(r.speaker===selected&&r.target===id)||(r.target===selected&&r.speaker===id);})&&selected!==id?" faded":""));g.setAttribute("transform","translate("+p.x+","+p.y+")");var rect=document.createElementNS(NS,"rect");rect.setAttribute("x","-88");rect.setAttribute("y","-29");rect.setAttribute("width","176");rect.setAttribute("height","58");rect.setAttribute("rx","5");g.appendChild(rect);var ac=document.createElementNS(NS,"line");ac.setAttribute("x1","-75");ac.setAttribute("y1","-18");ac.setAttribute("x2","-75");ac.setAttribute("y2","18");ac.setAttribute("class","accent");ac.setAttribute("stroke",{left:"#bd6573",center:"#647f99",right:"#438c79"}[mapGroup(id)]);g.appendChild(ac);var nm=document.createElementNS(NS,"text");nm.setAttribute("x","2");nm.setAttribute("y","-3");nm.setAttribute("text-anchor","middle");nm.setAttribute("class","nodeName");nm.textContent=shortPersonName(id);g.appendChild(nm);var role=document.createElementNS(NS,"text");role.setAttribute("x","2");role.setAttribute("y","16");role.setAttribute("text-anchor","middle");role.setAttribute("class","nodeRole");role.textContent=mapRole(id).slice(0,12);g.appendChild(role);g.addEventListener("click",function(){MAP_SELECTED=MAP_SELECTED===id?null:id;openRelationMap();});svg.appendChild(g);});
+ host.appendChild(svg);renderMapDetail(ids,rels);$("mapOv").classList.add("open");requestAnimationFrame(function(){host.scrollLeft=Math.max(0,(host.scrollWidth-host.clientWidth)/2);});
+}
+
+function advance(){
+ if(isOverlayOpen())return;
+ var b=BEATS[state.idx];
+ if(b){
+  state.log.push({sp:b.sp,txt:visibleTxt(b)});
+  b.rev.forEach(function(c){ if(state.seen.indexOf(c)<0)state.seen.push(c); });
+ }
+ if(state.idx>=BEATS.length-1){state.ended=true;save();showEnd();stopAuto();return;}
+ state.idx++; save(); renderBeat();
+}
+function startFresh(){state={idx:0,seen:[],log:[],ended:false,autoTimer:null,farthestArc:0,lastSceneId:null,cardTimer:null};save();$("entryOv").classList.remove("open");renderBeat();}
+function continueFromSave(){
+ var o=loadSave(); if(!o||o.ended){startFresh();return;}
+ var idx=beatIndexById(o.beatId);
+ if(BEATS[idx].id!==o.beatId){var mi=resolveOldBeatId(o.beatId);if(mi>=0)idx=mi;}
+ state={idx:idx,seen:o.seen,log:o.log,ended:false,autoTimer:null,farthestArc:o.farthestArc||0,lastSceneId:BEATS[idx].sc,cardTimer:null};
+ dismissSceneCard();
+ $("entryOv").classList.remove("open");renderBeat();
+}
+function showEnd(){$("endOv").classList.add("open");}
+
+function isOverlayOpen(){return $("logOv").classList.contains("open")||$("codexOv").classList.contains("open")||$("mapOv").classList.contains("open")||$("entryOv").classList.contains("open")||$("endOv").classList.contains("open")||$("arcOv").classList.contains("open");}
+function openLog(){
+ var ll=$("logList");ll.innerHTML="";
+ if(!state.log.length)ll.innerHTML="<div class='logItem'>还没有发生的对白。</div>";
+ state.log.forEach(function(it){var d=document.createElement("div");d.className="logItem";
+  d.innerHTML="<b>"+(SPN[it.sp]||it.sp)+"</b>"+it.txt;ll.appendChild(d);});
+ $("logOv").classList.add("open");
+}
+function openCodex(focusId){
+ var cl=$("codexList");cl.innerHTML="";
+ var b=BEATS[state.idx];
+ var curArcIdx=ARCS.findIndex(function(a){return a.id===b.arc;});
+ var arcTitle=ARCS[curArcIdx]?ARCS[curArcIdx].title:"";
+ var scMeta=SCENE_META[b.sc]||{};
+ $("codexSub").textContent="更新至：第"+(curArcIdx+1)+"篇 · "+(scMeta.place||"");
+ var cr=UICTX.characterReveals||{};
+ var currentCtx=(UICTX.beatContext&&UICTX.beatContext[b.id])||{};
+ var visibleNow=(currentCtx.focus||[]).concat(currentCtx.participants||[]);
+ var encounteredNow=encounteredIds();
+ var hereNow=[];
+ for(var hi=state.idx;hi>=0&&BEATS[hi].sc===b.sc;hi--){var hb=BEATS[hi],hc=(UICTX.beatContext&&UICTX.beatContext[hb.id])||{};(hc.focus||[]).concat(hc.participants||[],hb.sp!=="narrator"?[hb.sp]:[]).forEach(function(x){if(x&&hereNow.indexOf(x)<0)hereNow.push(x);});}
+ var entries=[];
+ Object.keys(cr).forEach(function(id){
+   var stages=cr[id]||[];
+   var known=encounteredNow.indexOf(id)>=0||visibleNow.indexOf(id)>=0;
+   var facts=[];
+   if(known){
+     stages.forEach(function(st){
+       var ai=ARCS.findIndex(function(a){return a.id===st.minArc;});
+       if(ai>=0&&ai<curArcIdx){(st.facts||[]).forEach(function(f){if(facts.indexOf(f)<0)facts.push(f);});}
+     });
+     var currentStage=stages.filter(function(st){return st.minArc===b.arc;});
+     if(currentStage.length){
+       var currentFacts=currentStage[0].facts||[];
+       BEATS.slice(0,state.idx+1).forEach(function(prev){
+         var pctx=(UICTX.beatContext&&UICTX.beatContext[prev.id])||{};
+         var involves=prev.sp===id||(pctx.focus||[]).indexOf(id)>=0||(pctx.participants||[]).indexOf(id)>=0;
+         if(involves){var evidence=(prev.txt||"")+(prev.lead||"")+(prev.tail||"")+(prev.kn||"");currentFacts.forEach(function(f){var keys=f.replace(/[，。、“”《》·]/g," ").split(/\s+/).filter(function(k){return k.length>=2;});if(keys.some(function(k){return evidence.indexOf(k)>=0;})&&facts.indexOf(f)<0)facts.push(f);});}
+       });
+       if(!facts.length&&currentFacts.length&&encounteredNow.indexOf(id)>=0)facts.push(currentFacts[0]);
+     }
+   }
+   var d=document.createElement("div");d.className="cx"+(known?"":" locked");d.dataset.cid=id;
+   var node=document.querySelector('#bg .port-img[data-p="'+id+'"]');
+   var img=node?node.cloneNode(true):document.createElement("img");
+   img.removeAttribute("class");img.style.display="block";img.style.width="46px";img.style.height="60px";
+   img.style.filter=known?"":"grayscale(1)";
+   var ci=document.createElement("div");ci.className="ci";
+   if(!known){ci.innerHTML="<h3>？？？</h3><p class='lk'>尚未遇见</p>";}
+   else{ci.innerHTML="<h3>"+(SPN[id]||id)+"</h3>"+(facts.length?facts.map(function(f){return"<p>"+f+"</p>";}).join(""):"<p class='lk'>暂无更多</p>");}
+   d.appendChild(img);d.appendChild(ci);
+   entries.push({d:d,known:known,here:hereNow.indexOf(id)>=0});
+ });
+ function sec(t){var s=document.createElement("div");s.className="sec";s.textContent=t;cl.appendChild(s);}
+ var hereE=entries.filter(function(e){return e.known&&e.here;}),restE=entries.filter(function(e){return e.known&&!e.here;}),lockedN=entries.filter(function(e){return !e.known;}).length;
+ if(hereE.length){sec("本场");hereE.forEach(function(e){cl.appendChild(e.d);});}
+ if(restE.length){sec("已登场");restE.forEach(function(e){cl.appendChild(e.d);});}
+ if(lockedN){sec("还有 "+lockedN+" 位人物尚未登场");}
+ if(focusId){var t=cl.querySelector('[data-cid="'+focusId+'"]');if(t){t.classList.add("hit");t.scrollIntoView({block:"center"});}}
+ $("codexOv").classList.add("open");
+}
+function openArc(){
+ var al=$("arcList");al.innerHTML="";
+ ARCS.forEach(function(a,ai){
+  var unlocked=ai<=state.farthestArc;
+  var cur=BEATS[state.idx]&&BEATS[state.idx].arc===a.id;
+  var d=document.createElement("div");
+  d.className="arcItem"+(unlocked?"":" locked")+(cur?" cur":"");
+  d.innerHTML="<h3>"+a.title+"</h3><span class='ab'>"+a.books+(unlocked?"":" · 未解锁")+"</span>";
+  if(unlocked)d.onclick=function(){stopAuto();$("arcOv").classList.remove("open");state.idx=arcFirstBeat(a.id);save();renderBeat();};
+  al.appendChild(d);
+ });
+ $("arcOv").classList.add("open");
+}
+function toggleAuto(){var b=$("mAuto"),tag=$("autoTag");
+ if(state.autoTimer){stopAuto();return;}
+ b.classList.add("on");b.textContent="自动中";if(tag)tag.classList.add("show");
+ var step=function(){
+   if(state.autoTimer===null)return;
+   if(sceneCardOpen()){state.autoTimer=setTimeout(step,300);return;}
+   if(!isOverlayOpen()){if(!_revealed){revealAll();}else advance();}
+   if(state.autoTimer!==null){state.autoTimer=setTimeout(step,beatDurOf(BEATS[state.idx])*1000);}
+ };
+ state.autoTimer=setTimeout(step,beatDurOf(BEATS[state.idx])*1000);
+}
+function stopAuto(){if(state.autoTimer){clearTimeout(state.autoTimer);state.autoTimer=null;}var b=$("mAuto"),tag=$("autoTag");if(b){b.classList.remove("on");b.textContent="自动播放";}if(tag)tag.classList.remove("show");}
+
+$("app").addEventListener("click",function(e){
+ if(e.target.closest(".btn")||e.target.closest(".readerCtl")||e.target.closest(".closex")||e.target.closest(".ov")||e.target.closest("#burger")||e.target.closest("#peopleBtn")||e.target.closest("#focus")||e.target.closest(".menuOv"))return;
+ if(isOverlayOpen())return;
+ advance();
+});
+$("sceneCard").addEventListener("click",function(){dismissSceneCard();});
+document.addEventListener("keydown",function(e){
+ if(e.key==="Escape"){document.querySelectorAll(".ov.open").forEach(function(o){if(o.id!=="entryOv"&&o.id!=="endOv")o.classList.remove("open");});closeMenu();return;}
+ if(isOverlayOpen())return;
+ if(e.key==="ArrowLeft"){e.preventDefault();previous();return;}
+ if(e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){e.preventDefault();advance();}
+});
+$("burger").onclick=function(){$("menuOv").classList.add("open");};
+function closeMenu(){$("menuOv").classList.remove("open");}
+$("menuOv").onclick=function(e){if(e.target===this)closeMenu();};
+$("mResume").onclick=function(){closeMenu();};
+$("mAuto").onclick=function(){closeMenu();toggleAuto();};
+$("mLog").onclick=function(){closeMenu();stopAuto();openLog();};
+$("mCodex").onclick=function(){closeMenu();stopAuto();openCodex();};
+$("mMap").onclick=function(){closeMenu();openRelationMap();};
+$("mArc").onclick=function(){closeMenu();stopAuto();openArc();};
+$("prevBtn").onclick=previous;
+$("next").style.cursor="pointer";
+$("next").onclick=function(e){e.stopPropagation();advance();};
+if($("peopleBtn"))$("peopleBtn").onclick=function(e){e.stopPropagation();closeMenu();stopAuto();openCodex();};
+$("progBtn").onclick=function(){closeMenu();stopAuto();$("menuOv").classList.add("open");};
+document.querySelectorAll(".pTab").forEach(function(t){t.onclick=function(){var to=t.dataset.tab;if(to==="map"&&!$("mapOv").classList.contains("open")){$("codexOv").classList.remove("open");openRelationMap();}else if(to==="codex"&&!$("codexOv").classList.contains("open")){$("mapOv").classList.remove("open");openCodex();}};});
+$("mRestart").onclick=function(){closeMenu();if(confirm("重开将仅清空本作品存档并回到开头，确定？")){stopAuto();clearSave();startFresh();}};
+$("startBtn").onclick=function(){clearSave();startFresh();if(window.STORY_EXTRAS&&STORY_EXTRAS.hook)showHook(STORY_EXTRAS.hook);};
+$("continueBtn").onclick=continueFromSave;
+$("endRestart").onclick=function(){clearSave();$("endOv").classList.remove("open");startFresh();};
+document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(x.dataset.close).classList.remove("open");};});
+
+(function(){var o=loadSave();
+ $("totalMin").textContent=fmtMin(totalSec());
+ $("continueBtn").disabled=!(o&&!o.ended);$("continueBtn").style.opacity=(o&&!o.ended)?"1":".4";
+ showBg(bgFile(BEATS[0].bg));
+})();
+
+
+/* ===== 追加：Galgame 皮肤层扩展 ===== */
+(function(){
+ // 名字牌受话人行
+ var _renderBeat=renderBeat;
+ renderBeat=function(b){
+   _renderBeat(b);
+   var bb=b||BEATS[state.idx];
+   var ctx=(UICTX.beatContext&&UICTX.beatContext[bb.id])||{};
+   var tl=document.getElementById("targetLine");
+   if(tl){
+     if(ctx.target&&SPN[ctx.target]){tl.textContent="→ "+shortPersonName(ctx.target)+(ctx.relationKey?" · "+ctx.relationKey:"");}
+     else tl.textContent="";
+   }
+   // 闪回/梦境/幻象 给 app 加类
+   var mode=(typeof BEAT_MODES!=="undefined"&&BEAT_MODES[bb.id])||"";
+   document.getElementById("app").classList.toggle("flashback",mode==="flashback");
+   document.getElementById("app").classList.toggle("dream",mode==="dream");
+   document.getElementById("app").classList.toggle("vision",mode==="vision");
+ };
+
+ // 场景标题过场：进入新场景时一次
+ var _lastScene=null;
+ var _maybeSceneCard=maybeSceneCard;
+ maybeSceneCard=function(b){
+   if(b.sc!==_lastScene){
+     _lastScene=b.sc;
+     var m=SCENE_META[b.sc]||{};
+     var ic=document.getElementById("sceneCardInner");
+     ic.innerHTML=(m.place?'<h2>'+m.place+'</h2>':'')+(m.time?'<div class="scTime">'+m.time+'</div>':'');
+     var sc=document.getElementById("sceneCard");sc.classList.add("show");
+     clearTimeout(window.__scT);window.__scT=setTimeout(function(){sc.classList.remove("show");},2200);
+   }
+ };
+
+ // 快进：跳到下一个不同场景
+ window.skipNextScene=function(){
+   stopAuto();
+   var cur=BEATS[state.idx].sc;
+   for(var i=state.idx+1;i<BEATS.length;i++){ if(BEATS[i].sc!==cur){ state.idx=i; state.log.push({sp:BEATS[i].sp,txt:visibleTxt(BEATS[i])}); save(); renderBeat(); return; } }
+ };
+
+ // 存档槽（3 个），独立 namespace 不覆盖主自动存档
+ var SLOT_KEY="karamazov_vn_slots_v1";
+ function readSlots(){try{return JSON.parse(localStorage.getItem(SLOT_KEY))||{};}catch(e){return{};}}
+ function writeSlots(o){try{localStorage.setItem(SLOT_KEY,JSON.stringify(o));}catch(e){}}
+ function slotThumb(bg){return "assets/comic/full/"+bg+".jpg";}
+ function openSlots(mode){ // mode: 'save' | 'load'
+   stopAuto();
+   var host=document.getElementById("saveSlots");host.innerHTML="";
+   document.getElementById("saveTitle").textContent=(mode==="save"?"存档":"读档");
+   var slots=readSlots();
+   for(var s=1;s<=3;s++){
+     var d=document.createElement("div");d.className="slot";
+     var data=slots["slot"+s];
+     if(data){
+       var b=BEATS[beatIndexById(data.beatId)]||BEATS[0];
+       var sc=SCENE_META[b.sc]||{};
+       var img=document.createElement("img");img.src=slotThumb(bgFile(b.bg));
+       var si=document.createElement("div");si.className="si";
+       si.innerHTML="<h4>存档位 "+s+"</h4><p>"+(sc.place||"")+"　"+(sc.time||"")+"<br>"+shortPersonName(b.sp)+"："+b.txt.slice(0,26)+"…</p>";
+       d.appendChild(img);d.appendChild(si);
+       d.onclick=function(){
+         if(mode==="save"){
+           slots["slot"+s]={beatId:BEATS[state.idx].id,ts:Date.now()};writeSlots(slots);
+           document.getElementById("saveOv").classList.remove("open");
+         }else{
+           var idx=beatIndexById(data.beatId);
+           state={idx:idx,seen:data.seen||[],log:data.log||[],ended:false,autoTimer:null,farthestArc:state.farthestArc,lastSceneId:null,cardTimer:null};
+           document.getElementById("saveOv").classList.remove("open");renderBeat();
+         }
+       };
+     }else{
+       d.innerHTML='<div class="empty">存档位 '+s+'　（空）</div>';
+       if(mode==="save"){d.onclick=function(){slots["slot"+s]={beatId:BEATS[state.idx].id,ts:Date.now()};writeSlots(slots);document.getElementById("saveOv").classList.remove("open");};}
+     }
+     host.appendChild(d);
+   }
+   document.getElementById("saveOv").classList.add("open");
+ }
+
+ // 绑定新按钮
+ function by(id){return document.getElementById(id);}
+ if(by("saveBtn"))by("saveBtn").onclick=function(){closeMenu&&closeMenu();stopAuto();openSlots("save");};
+ if(by("loadBtn"))by("loadBtn").onclick=function(){closeMenu&&closeMenu();stopAuto();openSlots("load");};
+ if(by("skipBtn"))by("skipBtn").onclick=function(){skipNextScene();};
+ if(by("logBtn"))by("logBtn").onclick=function(){closeMenu&&closeMenu();stopAuto();openLog();};
+ if(by("peopleBtn2"))by("peopleBtn2").onclick=function(){closeMenu&&closeMenu();stopAuto();openCodex();};
+ if(by("autoBtn"))by("autoBtn").onclick=function(){toggleAuto();var ab=by("autoBtn");if(ab)ab.classList.toggle("on",!!state.autoTimer);};
+ // 标题菜单入口
+ if(by("mLoadTitle"))by("mLoadTitle").onclick=function(){openSlots("load");};
+ if(by("mArcTitle"))by("mArcTitle").onclick=function(){openArc();};
+ if(by("mCodexTitle"))by("mCodexTitle").onclick=function(){document.getElementById("entryOv").classList.remove("open");openCodex();};
+ // 同步 auto 按钮态
+ var _toggleAuto=toggleAuto;toggleAuto=function(){_toggleAuto();setTimeout(function(){var ab=by("autoBtn");if(ab)ab.classList.toggle("on",!!state.autoTimer);},0);};
+})();
+
+/* ============================================================
+ * v17 影神图增强层（占位数据，后续 story-extras.json 直接替换）
+ * ============================================================ */
+(function(){
+ "use strict";
+ // ---- 占位文案数据（待 story-extras.json 覆盖）----
+ var CHAR_TITLE={fyodor:"荒唐地主",dmitri:"烈火般的长子",ivan:"沉思的次子",alyosha:"温良的见习修士",zosima:"德高望重的长老",grushenka:"炽烈的富孀",katerina:"高傲的未婚妻",smerdyakov:"阴鸷的厨子",grigory:"忠诚老仆",miusov:"开明远亲",khokhlakov:"孀居贵妇",lise:"病中少女",rakitin:"势利同学",snegiryov:"落魄大尉",ilyusha:"倔强的小学生",krassotkin:"自负的少年",samsonov:"老商人",perhotin:"青年官员",kirillovitch:"公诉人",fetyukovitch:"名辩护律师",nikolay_parfenovitch:"预审推事",devil:"高烧中的幻象",marfa:"老仆之妻",peasant:"农妇",librarian:"修士",maximov:"落魄老绅",kalganov:"腼腆青年"};
+ var CHAR_IDENTITY={fyodor:"白手起家的破落地主，吝啬而爱出丑。",dmitri:"卡拉马佐夫家长子，被激情焚烧。",ivan:"次子，以理性与怀疑为刃。",alyosha:"三子，修道院见习修士，众人的倾听者。",zosima:"城中长老，以爱与宽恕教诲众人。",grushenka:"小城富孀，父子二人争夺的对象。",katerina:"德米特里的未婚妻，高傲而自苦。",smerdyakov:"费奥多尔家厨子，身世成谜。",grigory:"服侍两代人的老仆。",miusov:"远亲监护人，自由派地主。",khokhlakov:"孀居贵妇，携病女莉兹。",lise:"霍赫拉科娃之女，轮椅上的少女。",rakitin:"神学校学生，阿辽沙的势利旧友。",snegiryov:"被当众羞辱的落魄大尉。",ilyusha:"受同学欺凌的小学生。",krassotkin:"名叫科利亚的自负少年。",samsonov:"放贷的老商人。",perhotin:"察觉异常的青年官员。",kirillovitch:"主持公诉的检察官。",fetyukovitch:"彼得堡来的名律师。",nikolay_parfenovitch:"冷静的预审推事。",devil:"伊万高烧中浮现的心魔。",marfa:"格里戈里之妻。",peasant:"向长老求告的农妇。",librarian:"修道院修士。",maximov:"落魄的老地主。",kalganov:"米乌索夫的年轻亲戚。"};
+ var FACTIONS=[{id:"family",name:"卡拉马佐夫一家",color:"#647f99",ids:["fyodor","dmitri","ivan","alyosha","smerdyakov","grigory","marfa"]},{id:"faith",name:"修道院与信仰",color:"#438c79",ids:["zosima","rakitin","peasant","librarian","maximov"]},{id:"love",name:"情感与纠葛",color:"#bd6573",ids:["grushenka","katerina","khokhlakov","lise","miusov","kalganov"]},{id:"case",name:"案件与众人",color:"#b88735",ids:["snegiryov","ilyusha","krassotkin","samsonov","perhotin","kirillovitch","fetyukovitch","nikolay_parfenovitch","devil"]}];
+ var FACE_POS={"alyosha":"46% 38%","dmitri":"50% 35%","fyodor":"52% 38%","ivan":"50% 38%","khokhlakov":"48% 35%","lise":"52% 35%","miusov":"50% 42%","zosima":"52% 38%","snegiryov":"50% 35%","fetyukovitch":"50% 38%","devil":"50% 35%","grigory":"50% 40%","grushenka":"50% 38%","ilyusha":"50% 38%","kalganov":"50% 42%","katerina":"50% 40%","krassotkin":"50% 38%","librarian":"50% 40%","marfa":"50% 40%","maximov":"50% 42%","nikolay_parfenovitch":"50% 42%","peasant":"50% 42%","perhotin":"50% 42%","kirillovitch":"50% 40%","rakitin":"50% 42%","samsonov":"50% 45%","smerdyakov":"50% 38%"};
+ var ARC_INTRO={a1:"小城旧宅里，一个荒唐父亲与三个儿子的命运开始交织。",a2:"修道院席间，体面与丑角相撞，长子闯入。",a3:"感官与欲望在城郊小馆与宅间蔓延。",a4:"长老之死将至，破屋与校园里另一条线展开。",a5:"酒馆之夜，次子抛出叛逆与宗教大法官之论。",a6:"长老的最后教诲与追述。",a7:"长老死后，阿辽沙在迦拿的婚宴里重立。",a8:"米嘉为三千卢布奔波，夜闯父宅。",a9:"预审室里，罪名压向长子。",a10:"水沟石桥边，少年与病中的孩子。",a11:"伊万三访厨子，心魔浮现。",a12:"法庭之上，所有人各就各位。"};
+ var ARC_SUMMARY={a1:"费奥多尔登场；米嘉追讨遗产；阿辽沙师从佐西马。",a2:"修道院席间冲突；米嘉当众与父对峙；长老伏地一拜。",a3:"格鲁申卡、卡捷琳娜登场；父子争同一女。",a4:"斯涅吉辽夫一家与伊柳沙登场；莉兹递条。",a5:"伊万与阿辽沙酒馆交心；大法官幻象。",a6:"长老作最后教诲。",a7:"长老离世；阿辽沙经迦拿之梦重立。",a8:"米嘉筹款、夜闯父宅伤老仆。",a9:"米嘉被预审指控弑父。",a10:"科利亚与伊柳沙；阿辽沙走近孩子。",a11:"伊万三访斯乜尔佳科夫，心魔现身。",a12:"审判；尾声，墓石旁少年们的约定。"};
+ var PROLOGUE=[{who:"fyodor",line:"我这一辈子，攒下了钱，也攒下了恨。"},{who:"dmitri",line:"我是为激情而生的人，哪怕烧尽自己。"},{who:"ivan",line:"既然上帝不存在，一切便都被允许。"},{who:"alyosha",line:"我们都该为一切人负罪——我信这个。"}];
+
+ // ---- 注入 CSS ----
+ var st=document.createElement("style");
+ st.textContent=[
+ "#introStack{position:absolute;right:18px;top:108px;z-index:25;display:flex;flex-direction:column;gap:10px;pointer-events:none;max-width:250px;align-items:flex-end;}",
+ ".introCard{pointer-events:auto;width:250px;background:var(--panel2);border:1px solid var(--trim);box-shadow:0 8px 30px rgba(0,0,0,.55);padding:12px;display:flex;gap:12px;align-items:center;opacity:0;transform:translateX(-14px);transition:opacity .35s ease,transform .35s ease;}",
+ ".introCard.show{opacity:1;transform:none;}",
+ ".introCard.gone{opacity:0;transform:translateX(-10px);}",
+ ".introCard .icp{width:66px;height:88px;flex:none;overflow:hidden;border:2px solid var(--trim);background:#111622;}",
+ ".introCard .icp img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;}",
+ ".introCard .ict{flex:1;min-width:0;cursor:pointer;}",
+ ".introCard .ict .ictTag{font-size:10px;color:var(--trim-soft);letter-spacing:.2em;margin-bottom:2px;}",
+ ".introCard .ict h4{font-size:16px;color:var(--trim);letter-spacing:.08em;margin-bottom:2px;}",
+ ".introCard .ict .ict2{font-size:11px;color:var(--ink-faint);margin-bottom:5px;}",
+ ".introCard .ict p{font-size:12px;color:var(--ink-dim);line-height:1.5;}",
+ "body.intro #topBtns,body.intro #btnBar,body.intro #topBar{visibility:hidden;}",
+ "#btnBar{left:8px;right:8px;bottom:6px;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:5px;}",
+ "#btnBar button{flex:0 1 auto;min-width:0;padding:5px 11px;font-size:12px;border-radius:4px;}",
+ "#btnBar button small{display:none;}",
+ "@media(max-width:560px){#btnBar{bottom:4px;gap:4px;}#btnBar button{padding:5px 8px;font-size:11px;}}",
+ "@media(max-width:600px){#btnBar button#autoBtn,#btnBar button#saveBtn,#btnBar button#prevBtn,#btnBar button#progBtn{display:inline-block;}#btnBar button#skipBtn,#btnBar button#logBtn,#btnBar button#loadBtn,#btnBar button#peopleBtn2{display:none;}}",
+ "#nameplate{position:relative;}",
+ "#nameplate .tgtline{display:inline;font-size:11px;color:var(--ink-dim);font-weight:400;letter-spacing:.03em;margin-left:8px;}",
+ "#nameplate .firstTag{position:absolute;top:-8px;right:-14px;font-size:9px;color:#b88735;border:1px solid #b88735;border-radius:3px;padding:0 4px;background:#14161f;}",
+ ".chapCard{position:absolute;inset:0;z-index:25;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.9);cursor:pointer;}",
+ ".chapCard .ccIn{text-align:center;max-width:720px;padding:30px;}",
+ ".chapCard .ccBook{font-size:14px;letter-spacing:.4em;color:#9a8f6f;margin-bottom:14px;}",
+ ".chapCard h2{font-family:var(--serif);font-size:34px;color:#ece3cd;margin:0 0 18px;}",
+ ".chapCard .ccIntro{font-size:16px;line-height:2;color:#cfc6b0;}",
+ ".chapCard .ccSkip{margin-top:30px;font-size:12px;color:#8a8270;letter-spacing:.2em;}",
+ ".recapOv{position:absolute;inset:0;z-index:28;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.92);cursor:pointer;}",
+ ".recapOv .rcIn{max-width:640px;padding:36px;text-align:center;}",
+ ".recapOv .rcTitle{font-size:13px;letter-spacing:.3em;color:#9a8f6f;margin-bottom:16px;}",
+ ".recapOv .rcWhere{font-family:var(--serif);font-size:22px;color:#ece3cd;margin-bottom:18px;}",
+ ".recapOv .rcTxt{font-size:15px;line-height:2;color:#cfc6b0;}",
+ ".recapOv .rcSkip{margin-top:26px;font-size:12px;color:#8a8270;letter-spacing:.2em;}",
+ "@media(max-width:600px){#sceneCard{top:0;bottom:auto;height:52vh;align-items:flex-start;padding-top:14vh;}#text{max-height:16vh;overflow-y:auto;font-size:14px;line-height:1.7;}#introStack{right:12px;left:12px;top:54px;width:auto;}#introStack .introCard{width:100%;}}",
+ ".ov{background-color:rgba(10,12,19,.96);background-image:url('assets/ui/texture_dark.jpg');background-size:384px;}",
+ ".introCard{background-image:url('assets/ui/card_border.png');background-size:100% 100%;}",
+ "#relationMap{background-image:url('assets/ui/bg_relation_network.jpg');background-size:cover;background-position:center;}",
+ "#charDetail .cdFrame{position:relative;display:inline-block;padding:26px;background:url('assets/ui/frame_ornate.png') center/contain no-repeat;}",
+ ".facGroup{margin:16px 0;}",
+ ".facGroup .fh{font-size:12px;letter-spacing:.12em;color:var(--trim);border-left:3px solid var(--trim);padding-left:8px;margin-bottom:8px;}",
+ "#codexList.gallery{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}",
+ "#codexList .cx.portrait-card .ph{height:150px;}",
+ "#codexList .cx.locked img{filter:grayscale(1) brightness(.4);}",
+ "#codexCount{font-size:13px;color:var(--ink-dim);}",
+ "#progLine{position:absolute;left:0;right:0;top:0;z-index:6;pointer-events:none;text-align:center;font-size:11px;color:var(--ink-faint);letter-spacing:.1em;padding-top:2px;}",
+ "@media (max-width:680px){#introStack{right:10px;left:auto;top:88px;max-width:210px;align-items:flex-end;}.introCard{width:210px;}}",
+ "@media (prefers-reduced-motion:reduce){.introCard{transition:none;}}"
+ ].join("\n");
+ document.head.appendChild(st);
+
+ // 初登场小卡容器（左侧安全区，可堆叠）
+ var stack=document.createElement("div");stack.id="introStack";
+ document.getElementById("app").appendChild(stack);
+
+ var shownIntro={};
+ function portSrc(id){var el=document.querySelector('.port-img[data-p="'+id+'"]');return el?el.src:null;}
+ function clearIntroCards(){stack.innerHTML="";}
+ function makeIntroCard(id){
+   var c=document.createElement("div");c.className="introCard";
+   var s=portSrc(id);
+   c.innerHTML='<div class="icp">'+(s?'<img src="'+s+'" alt="" style="object-position:'+(FACE_POS[id]||'50% 38%')+'">':'')+'</div>'+
+    '<div class="ict"><div class="ictTag">初登场</div><h4></h4><div class="ict2"></div><p></p></div>';
+   c.querySelector("h4").textContent=(window.NAME_CANON_SHORT&&NAME_CANON_SHORT[id])||shortPersonName(id);
+   c.querySelector(".ict2").textContent=CHAR_TITLE[id]||"";
+   var fm=(window.STORY_EXTRAS&&STORY_EXTRAS.firstMeet&&STORY_EXTRAS.firstMeet[id])||CHAR_IDENTITY[id]||"";
+   c.querySelector("p").textContent=fm;
+   c.addEventListener("click",function(ev){ev.stopPropagation();openCodex(id);});
+   var sec=6+Math.min(6,fm.length*0.06);
+   var t=setTimeout(function(){c.classList.add("gone");setTimeout(function(){if(c.parentNode)c.remove();},300);},sec*1000);
+   c.addEventListener("mouseenter",function(){clearTimeout(t);c._t=null;});
+   c.addEventListener("mouseleave",function(){if(!c._t)c._t=setTimeout(function(){c.classList.add("gone");},1500);});
+   stack.appendChild(c);
+   setTimeout(function(){c.classList.add("show");},30);
+ }
+ // 最近登场（供图鉴“人物”按钮找回）
+ var recentMet=[];
+
+ // 钩子：renderBeat 后触发初登场 + 短名字牌 + 进度行
+ var _rb=renderBeat;
+ renderBeat=function(){
+   _rb.apply(this,arguments);
+   try{
+     clearIntroCards();
+     var b=BEATS[state.idx];if(!b)return;
+     var curIdx=state.idx;
+     var cx=UICTX.beatContext[b.id]||{};
+     var ppl=(cx.focus||[]).slice();
+     if(b.sp&&b.sp!=="narrator"&&ppl.indexOf(b.sp)<0)ppl.push(b.sp);
+     ppl.forEach(function(id){if(FIRST_ON_STAGE[id]===state.idx){if(!shownIntro[id]){shownIntro[id]=1;recentMet.unshift(id);recentMet=recentMet.slice(0,6);setTimeout(function(){if(state.idx===curIdx)makeIntroCard(id);},1700);}}});
+     // 短名字牌
+     if(b.sp&&b.sp!=="narrator"){var nm=document.getElementById("name");nm.textContent=shortPersonName(b.sp);
+       var fa=document.querySelector("#focus .fp .ava img");if(fa&&FACE_POS[b.sp])fa.style.objectPosition=FACE_POS[b.sp];}
+     // 常驻进度行
+     var ai=ARCS.findIndex(function(a){return a.id===b.arc;});
+     var pl=document.getElementById("progLine");
+     if(!pl){pl=document.createElement("div");pl.id="progLine";document.getElementById("topBar").appendChild(pl);}
+     pl.textContent="第"+["一","二","三","四","五","六","七","八","九","十","十一","十二"][ai]+"篇 · "+(ai>=0?ARCS[ai].title:"")+" · "+(state.idx+1)+"/"+BEATS.length;
+   }catch(e){console.warn("v17hook",e);}
+ };
+
+ // 钩子：startFresh 直接进第一拍（无四人序幕）
+ var _sf=startFresh;
+ startFresh=function(){document.body.classList.remove("intro");_sf.apply(this,arguments);};
+ // 标题页默认隐藏工具按钮
+ if(document.getElementById("entryOv").classList.contains("open")){
+   document.body.classList.add("intro");
+   document.querySelectorAll("#bg .bg-img").forEach(function(im){im.classList.remove("on");});
+   var tb=document.querySelector('#bg .bg-img[data-bg="bg_bridge"]');if(tb)tb.classList.add("on");
+ }
+ // 规范短名覆盖
+ if(window.NAME_CANON_SHORT){
+   var _spn=shortPersonName;
+   shortPersonName=function(id){return NAME_CANON_SHORT[id]||_spn(id);};
+ }
+ // 接影神图模块
+ function cxProgress(){
+   var sc=(BEATS[state.idx]||{}).sc||ARCS[0].startScene;
+   var n=1;for(var i=0;i<ARCS.length;i++){if(scIndexOf(ARCS[i].startScene)<=scIndexOf(sc))n=i+1;}
+   return n;
+ }
+ function scIndexOf(sc){var m={};BEATS.forEach(function(b,i){if(!(b.sc in m))m[b.sc]=i;});return m[sc]!=null?m[sc]:0;}
+ function cxMet(){var s=[];for(var k in FIRST_ON_STAGE){if(FIRST_ON_STAGE[k]<=state.idx)s.push(k);}return s;}
+ // 标题页零进度时禁用「人物」
+ (function(){
+   var el=document.getElementById("mCodexTitle");
+   if(el){
+     var hasProgress=(typeof load==="function");
+     var saved=null;try{saved=JSON.parse(localStorage.getItem("karamazov_vn_full_v3")||"null");}catch(e){}
+     if(!saved){el.disabled=true;el.style.opacity=.35;el.style.cursor="not-allowed";}
+     el.addEventListener("click",function(e){
+       if(el.disabled){e.stopPropagation();e.preventDefault();return;}
+       if(typeof openCodex==="function")openCodex(cxProgress(),cxMet());
+     },true);
+   }
+ })();
+ ["peopleBtn","peopleBtn2"].forEach(function(id){var el=document.getElementById(id);if(el)el.onclick=function(e){e&&e.stopPropagation&&e.stopPropagation();if(window.stopAuto)stopAuto();if(window.closeMenu)closeMenu();if(typeof openCodex==="function")openCodex(cxProgress(),cxMet());};});
+ // 作品引子 hook（开始后一次，可点跳过）
+ window.showHook=function(text){
+   var d=document.createElement("div");d.id="hookOv";
+   d.innerHTML='<div class="hookCard"><div class="hookTxt">'+text+'</div><div class="hookSkip">点击任意处开始阅读</div></div>';
+   d.style.cssText="position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.88);cursor:pointer;";
+   d.querySelector(".hookCard").style.cssText="max-width:680px;text-align:center;padding:40px;";
+   d.querySelector(".hookTxt").style.cssText="font-family:var(--serif);font-size:24px;line-height:1.9;color:#e8e0cf;letter-spacing:.04em;";
+   d.querySelector(".hookSkip").style.cssText="margin-top:26px;font-size:12px;color:#9a937f;letter-spacing:.2em;";
+   d.onclick=function(){d.remove();};
+   document.body.appendChild(d);
+ };
+
+ // ===== 章节卡 / 小结卡 / 前情提要 =====
+ (function(){
+   var X=window.STORY_EXTRAS||{};
+   var CHAP={};(X.chapters||[]).forEach(function(c){CHAP[c.id]=c;});
+   // beat -> arc id：按 ARCS startScene 顺序
+   var arcOrder=ARCS.map(function(a){return a.id;});
+   function arcOfScene(sc){
+     var cur=null;
+     for(var i=0;i<ARCS.length;i++){ if(scIndex(ARCS[i].startScene)>=0){ /* may refine */ } }
+     return cur;
+   }
+   // build ordered scene->arc by walking beats
+   var _scIdx={};BEATS.forEach(function(b,i){if(!(b.sc in _scIdx))_scIdx[b.sc]=i;});
+   function sceneIdx(sc){return _scIdx[sc];}
+   function sceneGE(a,b){return sceneIdx(a)>=sceneIdx(b);}
+   var beatArc=new Array(BEATS.length);
+   var ai=0;
+   for(var i=0;i<BEATS.length;i++){
+     var sc=BEATS[i].sc;
+     while(ai<ARCS.length-1 && sceneGE(sc,ARCS[ai+1].startScene)) ai++;
+     beatArc[i]=ARCS[ai]?ARCS[ai].id:arcOrder[0];
+   }
+   var _shownArc=null,_skipNextCard=false;
+
+   function chapMap(){var m={};(window.STORY_EXTRAS&&STORY_EXTRAS.chapters||[]).forEach(function(c){m[c.id]=c;});return m;}
+   function showChapCard(arcId,isSummary){
+     var CHAP=chapMap();var c=CHAP[arcId];if(!c)return;
+     var d=document.createElement("div");d.className="chapCard";
+     var body;
+     if(isSummary&&c.summary){
+       body='<div class="ccBook">本篇终 · 小结</div><h2>'+c.title+'</h2>'+
+         '<div class="ccIntro">'+c.summary.what+'</div>'+
+         (c.summary.relations?'<div class="ccIntro" style="margin-top:14px;color:#b9a06a;">'+c.summary.relations+'</div>':'');
+     }else{
+       body='<div class="ccBook">'+(c.title.split("·")[0]||"")+'</div><h2>'+c.title+'</h2><div class="ccIntro">'+(c.intro||"")+'</div>';
+     }
+     d.innerHTML='<div class="ccIn">'+body+'<div class="ccSkip">点击任意处继续</div></div>';
+     d.onclick=function(){d.remove();};
+     document.body.appendChild(d);
+   }
+   window.showChapCard=showChapCard;
+
+   // 前情提要
+   window.showRecap=function(){
+     var b=BEATS[state.idx];var sc=b.sc;
+     var prev=BEATS[state.idx-1];var psc=prev?prev.sc:sc;
+     var rec=(window.STORY_EXTRAS&&STORY_EXTRAS.recap)||{};
+     var r=rec[psc]||"";
+     var CHAP=chapMap();var arc=beatArc[state.idx];var c=CHAP[arc]||{};
+     var place=(SCENE_META[sc]&&SCENE_META[sc].place)||sc;
+     var d=document.createElement("div");d.className="recapOv";
+     d.innerHTML='<div class="rcIn"><div class="rcTitle">上次读到</div><div class="rcWhere">'+(c.title||"")+' · '+place+'</div>'+
+       (r?'<div class="rcTxt">前情：'+r+'</div>':'')+'<div class="rcSkip">点击任意处继续</div></div>';
+     d.onclick=function(){d.remove();};
+     document.body.appendChild(d);
+   };
+
+   // hook renderBeat: detect arc change
+   var _rb=renderBeat;
+   renderBeat=function(b){
+     _rb(b);
+     var i=state.idx;var arc=beatArc[i];
+     if(_shownArc===null){_shownArc=arc;}
+     else if(arc!==_shownArc){
+       // summary of previous, then title of new
+       showChapCard(_shownArc,true);
+       _shownArc=arc;
+       setTimeout(function(){if(!_skipNextCard)showChapCard(arc,false);},0);
+     }
+     // 初登场小标放到名字牌右侧
+     var nm=document.getElementById("name");
+     if(nm&&nm.parentNode.querySelector(".firstTag"))nm.parentNode.querySelector(".firstTag").remove();
+     if(nm&&b&&b.sp&&FIRST_ON_STAGE[b.sp]===i){
+       var tg=document.createElement("span");tg.className="firstTag";tg.textContent="初登场";
+       nm.parentNode.appendChild(tg);
+     }
+   };
+   // 从存档继续：前情提要
+   if(window.continueFromSave){
+     var _c=continueFromSave;
+     continueFromSave=function(){_c();setTimeout(function(){showRecap();},400);};
+   }
+ })();
+})();
+</script>
+<script>
+window.STORY_EXTRAS={"hook": "一座小城里，一个父亲和三个儿子，把爱与恨都烧到了底。", "chapters": [{"id": "a1", "title": "第一部 · 家族往事", "intro": "一座空荡老宅，三个被父亲丢下的儿子先后长大。", "summary": {"what": "费奥多尔两度丧妻，攒下十万卢布却吝啬出丑；米嘉由老仆养大，成年回家讨还母亲遗产；阿辽沙入修道院做见习修士，师从佐西马长老。", "newChars": ["fyodor", "grigory", "dmitri", "alyosha", "zosima"], "relations": "米嘉与父亲结下争产积怨；阿辽沙与长老结成师徒。"}}, {"id": "a2", "title": "第二部 · 意外的聚会", "intro": "一次修道院会面，把全城体面人搅进同一间屋。", "summary": {"what": "众人赴修道院见长老；费奥多尔席间扮丑，与米乌索夫当众顶撞；迟到的米嘉闯进来与父亲撕破脸；长老忽然伏地向米嘉一拜，斋堂不欢而散。", "newChars": ["miusov", "kalganov", "maximov", "peasant", "khokhlakov", "lise", "ivan", "librarian"], "relations": "父子当众互揭短；长老对米嘉生出怜悯；伊万第一次开口论辩。"}}, {"id": "a3", "title": "第三部 · 感官者", "intro": "父亲与长子，如今为同一个女人反目。", "summary": {"what": "仆人小屋里说起厨子斯乜尔佳科夫的身世；米嘉夜下向阿辽沙剖白往事，又与父亲同争格鲁申卡；他当面向未婚妻卡捷琳娜悔婚，被她掷钱还债。", "newChars": ["grushenka", "katerina"], "relations": "父子争同一女；米嘉与卡捷琳娜走到决裂边缘；米嘉向阿辽沙倾吐心事。"}}, {"id": "a4", "title": "第四部 · 刺痛", "intro": "长老病危，一个被羞辱的上尉家藏着孩子的心。", "summary": {"what": "阿辽沙随侍临终的长老；他受托周济上尉家，钱被摔在地上；小学校园里他为被围攻的伊柳沙出头；霍赫拉科娃家，莉兹偷偷塞给他一张纸条。", "newChars": ["snegiryov", "ilyusha"], "relations": "阿辽沙与伊柳沙初遇；阿辽沙向上尉许下和解之诺；莉兹对阿辽沙生出心事。"}}, {"id": "a5", "title": "第五部 · 叛逆与宗教大法官", "intro": "两兄弟酒馆彻夜长谈：一个退回世界，一个讲了个吻的故事。", "summary": {"what": "伊万与阿辽沙交心，说出拒受这个世界的叛逆；他借宗教大法官之口讲完长诗，基督无言一吻，阿辽沙以吻回敬兄长；厨子暗中撺掇伊万离城。", "newChars": ["smerdyakov"], "relations": "兄弟交心却立场对立，终以一吻相和；斯乜尔佳科夫开始凑近伊万。"}}, {"id": "a6", "title": "第六部 · 俄罗斯修士", "intro": "长老弥留之际，把一生的道理留给最年轻的弟子。", "summary": {"what": "长老追述从军与决斗的一生，被一句话点醒；他嘱咐阿辽沙不要离开修道院，也不要恨这世界，要不停歇地爱人。", "newChars": [], "relations": "师徒之间完成最后的托付。"}}, {"id": "a7", "title": "第七部 · 阿辽沙", "intro": "长老的遗体没有散香，年轻人心里的柱子塌了。", "summary": {"what": "长老遗体出现腐味，拉基金带阿辽沙下山；格鲁申卡给他一颗核桃，露出柔软一面；阿辽沙在棺旁梦见迦拿的婚宴，醒来泪如雨下，重新站稳。", "newChars": ["rakitin"], "relations": "格鲁申卡对阿辽沙卸下心防；阿辽沙经梦境重立信念。"}}, {"id": "a8", "title": "第八部 · 米嘉", "intro": "三千卢布像一团火，烧得米嘉连夜翻过一道矮墙。", "summary": {"what": "米嘉求老商人借钱被耍，连夜赶路一无所获；他夜潜父亲花园，老仆格里戈里扑出擒他，被他一研杵击倒；他换钱后直奔莫克罗耶买醉。", "newChars": ["samsonov", "perhotin"], "relations": "老仆与长子正面冲突；米嘉与格鲁申卡重逢；官员察觉他一身血腥。"}}, {"id": "a9", "title": "第九部 · 预审", "intro": "清晨的酒馆被警察推开：父亲昨夜死在花园里。", "summary": {"what": "警察在莫克罗耶带走米嘉；预审推事与检察官连夜审讯；他承认打伤老仆，坚称没杀父亲；那三千卢布的去向，成了绕不开的谜。", "newChars": ["kirillovitch", "nikolay_parfenovitch"], "relations": "公诉与被告正面相对；米嘉一口咬定自己清白。"}}, {"id": "a10", "title": "第十部 · 男孩们", "intro": "一块被孩子们围着的石头，引阿辽沙走进一个受伤的家。", "summary": {"what": "阿辽沙桥头劝架反被伊柳沙咬了手；他走进上尉的破屋，许诺兄长会亲自登门道歉；自负的小学生科利亚握住伊柳沙的手，几天后孩子死了。", "newChars": ["krassotkin"], "relations": "上尉父子相依为命；阿辽沙向上尉许下和解之诺。"}}, {"id": "a11", "title": "第十一部 · 伊万", "intro": "病中的伊万三访那个厨子，终于听见最怕的那句话。", "summary": {"what": "伊万病中疑心难平，三访斯乜尔佳科夫；厨子先装病、再反咬，最后摊牌承认涉案；伊万高烧中看见心魔，承认自己曾盼父亲死；次日厨子上吊。", "newChars": ["devil"], "relations": "伊万与厨子从逼问到对质；心魔照出他灵魂里的罪。"}}, {"id": "a12", "title": "第十二部 · 审判与尾声", "intro": "法庭上两篇讲稿撕扯全城；墓石旁孩子们齐声喊出同一个名字。", "summary": {"what": "庭审上检察官把卡拉马佐夫家画成漫画，辩护律师从钱的有无翻案；陪审团判米嘉有罪；伊柳沙下葬，阿辽沙在墓石前嘱咐孩子们记得善良。", "newChars": ["fetyukovitch"], "relations": "卡捷琳娜当庭呈上那封亲笔信；阿辽沙与少年们达成和解。"}}], "recap": {"s1": "老卡拉马佐夫两度丧妻，攒下万家产，三个儿子无人照看。", "s2": "米嘉由老仆养大，成年回家，向父亲讨还母亲的遗产。", "s3": "三子阿辽沙在修道院做见习修士，师从长老佐西马。", "s4": "众人乘车赴修道院，米乌索夫先到，山门无人出迎。", "s5": "修士室里费奥多尔扮丑讲笑话，与米乌索夫当场顶撞。", "s6": "长老先走向门廊下抽搐的农妇，按上圣带为她祈祷。", "s7": "霍赫拉科娃夫人守着轮椅上的莉兹，向长老诉苦。", "s8": "莉兹当众笑阿辽沙脸红，又托他转交卡捷琳娜的便条。", "s9": "伊万席间论教会与国家，费奥多尔专挑米乌索夫取乐。", "s10": "迟到的米嘉闯进来，父子当众撕破脸，满屋哗然。", "s11": "长老忽然起身，向米嘉额头贴地一拜，满座皆惊。", "sa1": "斋堂素餐不欢而散，米乌索夫愤然离席。", "sa2": "下房里说起厨子斯乜尔佳科夫的私生传闻。", "sa3": "当夜柳树下，米嘉向阿辽沙剖白负心往事。", "sa5": "父子二人同争富孀格鲁申卡，她在两头周旋。", "sa4": "米嘉向卡捷琳娜悔婚，被她把钱掷回脚边。", "sa6": "长老病危领终傅，阿辽沙跪在椅边侍听。", "sa7": "阿辽沙悄悄周济上尉一家，两张钞票被摔在地上。", "sa8": "小学校园里，阿辽沙为被围攻的孩子出头。", "sa9": "霍赫拉科娃家，莉兹偷偷塞给阿辽沙一张纸条。", "p-supp-v3": "伊万约阿辽沙在酒馆坐下，兄弟多年后首次交心。", "sa10": "伊万说出叛逆：他把这个世界原样退回给他。", "sa11": "伊万讲完宗教大法官的长诗，阿辽沙以吻回敬兄长。", "p-supp-v67": "厨子撺掇伊万离城，阿辽沙心中浮起不祥。", "sa12": "长老追述一生，留下不停歇地爱人的遗言。", "b_s1": "长老遗体出现腐味，见习修士们压低声音讥笑。", "b_s2": "拉基金带阿辽沙下山，一路试探他的信仰。", "b_s3": "格鲁申卡给阿辽沙一颗核桃，露出柔软一面。", "b_s4": "阿辽沙在棺旁梦见迦拿的婚宴，醒来泪如雨下。", "b_s5": "米嘉求老商人萨姆索诺夫借三千卢布，被支开。", "b_s6": "米嘉连夜赶路，里亚戈维烂醉不醒，钱没借到。", "b_s7": "米嘉夜潜父亲花园，攥着铜研杵躲在灌木后。", "b_s8": "老仆格里戈里扑出擒他，米嘉一研杵把他打倒。", "b_s9": "米嘉换钱时衣袖带血，被彼尔霍金看在眼里。", "b_s10": "莫克罗耶酒馆，米嘉买醉请全场喝酒，等她坐到天亮。", "b_s11": "警察推门而入：父亲昨夜死在花园里，米嘉被铐走。", "b_s12": "预审连夜进行，米嘉承认伤仆，坚称没杀父亲。", "s-c1": "桥头一群孩子围打伊柳沙，阿辽沙劝架反被咬伤。", "s-c2": "阿辽沙走进上尉的破屋，许诺兄长登门道歉。", "s-c3": "科利亚握住病中伊柳沙的手；几天后，孩子死了。", "p-supp-xi15": "伊万病倒，决心再去见那个厨子。", "s-c4": "伊万首访斯乜尔佳科夫，对方装病，什么都不认。", "s-c5": "二访逼问，厨子反咬：你不就盼着你父亲早点死吗？", "s-c6": "三访摊牌，厨子承认动手，把伊万说成主谋。", "s-c7": "伊万高烧，看见穿黄褐色外套的心魔坐客。", "s-c8": "斯乜尔佳科夫次日上吊，留下一张字条。", "s-c9": "开庭。格里戈里作证，医生争论米嘉是不是疯子。", "s-c10": "控辩两篇讲稿撕扯全城，旁听席有人鼓掌有人嘘。", "s-c11": "陪审团裁定：谋杀父亲有罪，抢劫有罪。", "s-c12": "判后朋友们筹钱想安排米嘉逃走，计划悬而未决。", "s-c13": "伊柳沙下葬，阿辽沙在墓石前嘱咐孩子们记得善良。"}, "firstMeet": {"alyosha": "家中第三子，修道院的年轻修士。", "dmitri": "长子米嘉，为讨遗产回到父亲家。", "ivan": "次子伊万，席间谈教会与国家。", "fyodor": "小城破落地主，三个儿子的荒唐父亲。", "zosima": "修道院里受人敬重的老长老。", "grigory": "老仆人，从小把米嘉喂大。", "marfa": "老仆人格里戈里的妻子。", "smerdyakov": "费奥多尔家的年轻厨子。", "miusov": "米嘉的远亲监护人，从巴黎回来。", "kalganov": "米乌索夫的年轻亲戚，一路同行。", "maximov": "图拉来的小地主，自来熟。", "peasant": "门廊下求告的农妇。", "khokhlakov": "携病女儿来求见长老的贵妇。", "lise": "轮椅上爱笑的小姑娘。", "librarian": "席间传话的修士执事。", "grushenka": "父子二人争夺的本地富孀。", "katerina": "米嘉的未婚妻，骄傲而受伤。", "snegiryov": "被米嘉当众羞辱的落魄上尉。", "ilyusha": "上尉的儿子，躲在父亲身后。", "krassotkin": "全校最自负的小学生科利亚。", "rakitin": "嘴上不饶人的见习修士。", "samsonov": "米嘉登门求款的老商人。", "perhotin": "半夜撞见米嘉的青年官员。", "kirillovitch": "带法警闯进门的检察官。", "nikolay_parfenovitch": "连夜审讯米嘉的预审推事。", "fetyukovitch": "远道而来的辩护律师。", "devil": "伊万病中看见的小客人。"}, "short": {"fyodor": "费奥多尔", "dmitri": "米嘉", "ivan": "伊万", "alyosha": "阿辽沙", "zosima": "佐西马", "miusov": "米乌索夫", "kalganov": "卡尔加诺夫", "maximov": "马克西莫夫", "peasant": "农妇", "khokhlakov": "霍赫拉科娃", "lise": "莉兹", "librarian": "修士", "grushenka": "格鲁申卡", "katerina": "卡捷琳娜", "snegiryov": "斯涅吉辽夫", "ilyusha": "伊柳沙", "krassotkin": "科利亚", "rakitin": "拉基金", "smerdyakov": "斯乜尔佳科夫", "grigory": "格里戈里", "marfa": "玛尔法", "samsonov": "萨姆索诺夫", "perhotin": "彼尔霍金", "kirillovitch": "检察官", "nikolay_parfenovitch": "预审推事", "fetyukovitch": "费久科维奇", "devil": "魔鬼"}};
+window.NAME_CANON_SHORT={"fyodor": "费奥多尔", "dmitri": "米嘉", "ivan": "伊万", "alyosha": "阿辽沙", "zosima": "佐西马", "miusov": "米乌索夫", "kalganov": "卡尔加诺夫", "maximov": "马克西莫夫", "peasant": "农妇", "khokhlakov": "霍赫拉科娃", "lise": "莉兹", "librarian": "修士", "grushenka": "格鲁申卡", "katerina": "卡捷琳娜", "snegiryov": "斯涅吉辽夫", "ilyusha": "伊柳沙", "krassotkin": "科利亚", "rakitin": "拉基金", "smerdyakov": "斯乜尔佳科夫", "grigory": "格里戈里", "marfa": "玛尔法", "samsonov": "萨姆索诺夫", "perhotin": "彼尔霍金", "kirillovitch": "检察官", "nikolay_parfenovitch": "预审推事", "fetyukovitch": "费久科维奇", "devil": "魔鬼"};
+</script>
+<style>
+<style>
+/* ============================================================
+   影神图 · 人物图鉴模块（可独立嵌入）
+   作用域：#codex-root 内全部样式；页面 demo 工具条在 .codex-demo-bar
+   ============================================================ */
+:root{
+  --cx-ink:#141009;
+  --cx-ink2:#1c160e;
+  --cx-ink3:#241c11;
+  --cx-paper:#d8cba8;
+  --cx-paper-dim:#978a6c;
+  --cx-paper-faint:#6d624c;
+  --cx-brass:#b08a4e;
+  --cx-brass-hi:#d3ac6a;
+  --cx-line:#3a2f1f;
+  --cx-line-soft:#2c2416;
+  --cx-f-family:#b08a4e;
+  --cx-f-love:#9c4048;
+  --cx-f-faith:#7e9cb0;
+  --cx-f-conflict:#b0653a;
+  --cx-serif:"Songti SC","Noto Serif SC","STSong","SimSun",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0d0a06;color:var(--cx-paper);font-family:var(--cx-serif)}
+body{min-height:100vh}
+
+/* ---------- demo 工具条（仅演示页使用，嵌入时删除） ---------- */
+.codex-demo-bar{
+  position:fixed;left:0;right:0;top:0;z-index:50;
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;
+  padding:10px 16px;background:#100c07ee;border-bottom:1px solid var(--cx-line);
+  font-size:13px;color:var(--cx-paper-dim);
+}
+.codex-demo-bar b{color:var(--cx-paper);font-weight:600}
+.codex-demo-bar input[type=range]{width:180px;accent-color:var(--cx-brass)}
+.codex-demo-bar label{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.codex-demo-bar button{
+  min-height:36px;padding:6px 18px;background:var(--cx-ink3);color:var(--cx-paper);
+  border:1px solid var(--cx-brass);font-family:var(--cx-serif);font-size:14px;cursor:pointer;
+}
+.codex-demo-bar button:hover{background:var(--cx-brass);color:#181207}
+#codex-arc-title{min-width:10em;color:var(--cx-brass-hi)}
+
+/* ================= 图鉴遮罩 ================= */
+#codex-root{position:fixed;inset:0;z-index:100;display:none}
+#codex-root.cx-open{display:block}
+.cx-backdrop{
+  position:absolute;inset:0;background:#0b0805e8;
+  backdrop-filter:blur(2px);
+}
+.cx-stage{
+  position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #201809 0%, #141009 55%, #0e0a06 100%);
+}
+.cx-stage::before{ /* 底纹 */
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.10;
+  background-image:url("../assets/ui/texture_dark.jpg");background-size:340px;
+}
+.cx-views{position:relative;flex:1;overflow:hidden}
+.cx-view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3a2f1f transparent}
+
+/* ---------- 顶栏 ---------- */
+.cx-topbar{
+  position:relative;z-index:5;display:flex;align-items:center;gap:14px;
+  padding:12px 22px 10px;border-bottom:1px solid var(--cx-line);
+  background:linear-gradient(#1a140c,#141009);
+}
+.cx-vert{width:1px;align-self:stretch;background:var(--cx-line)}
+.cx-title{font-size:20px;letter-spacing:.35em;color:var(--cx-brass-hi);font-weight:600;white-space:nowrap}
+.cx-count{font-size:13px;color:var(--cx-paper-dim);letter-spacing:.1em;white-space:nowrap}
+.cx-count em{color:var(--cx-brass-hi);font-style:normal;font-weight:600}
+.cx-spacer{flex:1}
+.cx-btn{
+  min-height:44px;min-width:44px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:transparent;border:1px solid var(--cx-line);color:var(--cx-paper);
+  font-family:var(--cx-serif);font-size:14px;letter-spacing:.15em;cursor:pointer;white-space:nowrap;
+}
+.cx-btn:hover{border-color:var(--cx-brass);color:var(--cx-brass-hi)}
+.cx-btn:active{background:#2a2010}
+.cx-btn.is-active{border-color:var(--cx-brass);color:var(--cx-brass-hi);background:#241b0d}
+.cx-close{font-size:18px;padding:0 12px}
+
+/* ================= 视图：画廊 ================= */
+.cx-gallery{padding:26px 28px 60px;max-width:1200px;margin:0 auto}
+.cx-group{margin-bottom:34px}
+.cx-group-head{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.cx-group-head::before,.cx-group-head::after{
+  content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--cx-line),transparent);
+}
+.cx-group-name{font-size:17px;letter-spacing:.4em;color:var(--cx-paper);font-weight:600;white-space:nowrap}
+.cx-group-name small{display:block;font-size:11px;letter-spacing:.2em;color:var(--cx-paper-faint);text-align:center;margin-top:2px}
+.cx-cards{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+.cx-card{
+  width:118px;cursor:default;flex:0 0 auto;
+}
+.cx-card.is-featured{width:168px}
+.cx-card-fig{
+  position:relative;width:100%;aspect-ratio:3/4;overflow:hidden;
+  border:1px solid var(--cx-line);background:var(--cx-ink2);
+}
+.cx-card.is-featured .cx-card-fig{border-color:#4a3a20}
+.cx-card-fig img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.82) brightness(.94);
+  transition:transform .25s ease, filter .25s ease}
+.cx-card:not(.is-locked):hover .cx-card-fig img{transform:scale(1.04);filter:saturate(.95) brightness(1)}
+.cx-card-fig::after{ /* 底部渐变托字 */
+  content:"";position:absolute;inset:auto 0 0 0;height:45%;
+  background:linear-gradient(transparent,#0c0905e8);pointer-events:none;
+}
+.cx-card:not(.is-locked){cursor:pointer}
+.cx-card:not(.is-locked):hover .cx-card-fig{border-color:var(--cx-brass)}
+.cx-card:not(.is-locked):active .cx-card-fig{transform:translateY(1px)}
+.cx-card-meta{position:relative;text-align:center;padding:7px 2px 0}
+.cx-card-name{font-size:14px;letter-spacing:.12em;color:var(--cx-paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-card-title{font-size:11px;color:var(--cx-paper-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+/* 未结识剪影卡 */
+.cx-card.is-locked .cx-card-fig{
+  background:
+    radial-gradient(80% 60% at 50% 42%, #221a10 0%, #120d07 100%);
+}
+.cx-silhouette{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  color:#3c3323;
+}
+.cx-silhouette .qm{font-size:44px;line-height:1;font-weight:600;color:#4a3f2a}
+.cx-silhouette .lbl{font-size:11px;letter-spacing:.25em;color:#55492f}
+
+/* ================= 视图：详情 ================= */
+.cx-detail{padding:26px 28px 70px;max-width:1080px;margin:0 auto}
+.cx-detail-back{margin-bottom:18px}
+.cx-detail-grid{display:grid;grid-template-columns:300px 1fr;gap:34px;align-items:start}
+.cx-frame{position:relative;aspect-ratio:600/824;width:100%;max-width:320px;margin:0 auto}
+.cx-frame-portrait{
+  position:absolute;inset:9.6% 14.6%;overflow:hidden;background:var(--cx-ink2);
+}
+.cx-frame-portrait img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85) brightness(.95)}
+.cx-frame-orn{
+  position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  filter:brightness(1.7) sepia(.25) saturate(.9);
+}
+.cx-info-name{font-size:28px;letter-spacing:.18em;color:var(--cx-paper);font-weight:600}
+.cx-info-title{
+  display:inline-block;margin-top:8px;font-size:13px;letter-spacing:.2em;color:var(--cx-brass-hi);
+  padding:3px 12px;border:1px solid var(--cx-line);
+}
+.cx-info-first{margin-top:14px;font-size:13.5px;line-height:1.9;color:var(--cx-paper-dim)}
+.cx-bio{margin-top:18px;border-top:1px solid var(--cx-line);padding-top:16px}
+.cx-bio h4{font-size:13px;letter-spacing:.4em;color:var(--cx-paper-faint);font-weight:600;margin-bottom:12px}
+.cx-bio p{font-size:14px;line-height:2.1;margin-bottom:12px;text-align:justify;color:var(--cx-paper)}
+.cx-bio p.lock{
+  color:#4d4230;text-align:center;letter-spacing:.25em;font-size:12.5px;margin:20px 0;
+}
+
+/* 羁绊环 */
+.cx-bonds{margin-top:22px;border-top:1px solid var(--cx-line);padding-top:16px}
+.cx-bonds h4{font-size:13px;letter-spacing:.4em;color:var(--cx-paper-faint);font-weight:600;margin-bottom:12px}
+.cx-ring{
+  position:relative;width:100%;max-width:360px;aspect-ratio:1/1;margin:6px auto 0;
+}
+.cx-ring svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.cx-node{
+  position:absolute;transform:translate(-50%,-50%);cursor:pointer;text-align:center;
+  background:none;border:none;padding:0;
+}
+.cx-node .av{
+  display:block;border-radius:50%;overflow:hidden;border:1px solid var(--cx-line);
+  background:var(--cx-ink3);
+}
+.cx-node .av img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.8) brightness(.92)}
+.cx-node:hover .av{border-color:var(--cx-brass)}
+.cx-node .nm{
+  display:block;margin-top:4px;white-space:nowrap;text-shadow:0 1px 3px #000;
+}
+.cx-node .nm b{display:block;font-weight:600;color:var(--cx-paper);font-size:11.5px;letter-spacing:.08em}
+.cx-node .nm i{display:block;font-style:normal;font-size:9.5px;margin:2px auto 0;letter-spacing:.12em;background:#141009d9;padding:1px 5px;border-radius:2px}
+.cx-node-center{cursor:default}
+.cx-node-center .av{border-color:var(--cx-brass);box-shadow:0 0 0 3px #2a2010, 0 0 18px #000}
+.cx-ring-elabel{font-size:5.4px;fill:var(--cx-brass-hi);paint-order:stroke;stroke:#141009;stroke-width:1.6px;letter-spacing:.1em}
+.cx-bonds-empty{font-size:12.5px;color:#4d4230;letter-spacing:.15px;padding:18px 0;text-align:center}
+
+/* ================= 视图：关系网 ================= */
+.cx-network{position:absolute;inset:0;overflow:hidden}
+.cx-network-bg{
+  position:absolute;inset:-4%;background:url("../assets/ui/bg_relation_network.jpg") center/cover;
+  opacity:.16;filter:grayscale(.4) brightness(.7);
+}
+.cx-network-veil{position:absolute;inset:0;background:radial-gradient(100% 100% at 50% 40%, transparent 30%, #0d0a06cc 100%)}
+.cx-net-wrap{position:absolute;inset:0;cursor:grab;touch-action:none}
+.cx-net-wrap.dragging{cursor:grabbing}
+.cx-net-svg{width:100%;height:100%;display:block}
+.cx-net-toolbar{
+  position:absolute;right:16px;top:14px;z-index:6;display:flex;gap:10px;align-items:center;
+}
+.cx-net-hint{
+  position:absolute;left:16px;bottom:14px;z-index:6;font-size:12px;color:var(--cx-paper-faint);letter-spacing:.12em;
+  background:#141009cc;border:1px solid var(--cx-line);padding:8px 12px;
+}
+.cx-net-legend{
+  position:absolute;left:16px;top:14px;z-index:6;display:flex;flex-direction:column;gap:6px;
+  background:#141009cc;border:1px solid var(--cx-line);padding:10px 12px;font-size:12px;color:var(--cx-paper-dim);
+}
+.cx-net-legend i{display:inline-block;width:18px;height:2px;margin-right:8px;vertical-align:middle}
+.cx-net-badge{
+  position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;
+  font-size:13px;letter-spacing:.2em;color:var(--cx-brass-hi);background:#141009cc;
+  border:1px solid var(--cx-line);padding:6px 16px;white-space:nowrap;
+}
+
+/* SVG 内元素 */
+.cx-net-edge{fill:none;stroke-width:1.4;opacity:.85}
+.cx-net-elabel{font-size:10.5px;fill:var(--cx-paper-dim);paint-order:stroke;stroke:#141009;stroke-width:3px;letter-spacing:.05em}
+.cx-net-fband{fill:none;stroke:#2c2416;stroke-width:1;stroke-dasharray:2 6;opacity:.6}
+.cx-net-fname{font-size:11px;fill:#5c4e33;letter-spacing:.35em}
+.cx-net-node{cursor:pointer}
+.cx-net-node .nm{font-size:11.5px;fill:var(--cx-paper);text-anchor:middle;paint-order:stroke;stroke:#141009;stroke-width:3px;letter-spacing:.06em}
+.cx-net-node circle{stroke-width:1.5}
+.cx-net-node.unmet{display:none}
+.cx-network.dim .cx-net-edge,.cx-network.dim .cx-net-elabel{opacity:.12}
+.cx-network.dim .cx-net-node{opacity:.22}
+.cx-network.dim .cx-net-node.hl{opacity:1}
+.cx-network.dim .cx-net-edge.hl{opacity:.9}
+.cx-network.dim .cx-net-elabel.hl{opacity:.9}
+
+/* ================= 响应式 ================= */
+@media (max-width:900px){
+  .cx-detail-grid{grid-template-columns:1fr;gap:22px}
+  .cx-frame{max-width:260px}
+}
+@media (max-width:640px){
+  .cx-gallery{padding:18px 14px 50px}
+  .cx-cards{gap:12px}
+  .cx-card{width:calc(50% - 6px);max-width:140px}
+  .cx-card.is-featured{width:calc(50% - 6px);max-width:170px}
+  .cx-detail{padding:18px 16px 50px}
+  .cx-info-name{font-size:22px}
+  .cx-topbar{padding:10px 12px;gap:8px}
+  .cx-title{font-size:16px;letter-spacing:.2em}
+  .cx-btn{padding:0 10px;font-size:12.5px;letter-spacing:.08em}
+  .cx-net-legend{font-size:11px;padding:8px}
+}
+@media (max-width:380px){
+  .cx-card{width:calc(50% - 6px)}
+  .cx-ring{max-width:300px}
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</style>
+<div id="codex-root" aria-hidden="true">
+  <div class="cx-backdrop"></div>
+  <div class="cx-stage">
+    <header class="cx-topbar">
+      <span class="cx-title">影神图</span>
+      <span class="cx-vert"></span>
+      <span class="cx-count">已结识 <em id="cx-met-n">0</em> / 27</span>
+      <span class="cx-spacer"></span>
+      <button class="cx-btn" id="cx-btn-network">关系网</button>
+      <button class="cx-btn" id="cx-btn-close">合上</button>
+    </header>
+    <div class="cx-views">
+      <section class="cx-view" id="cx-view-gallery"></section>
+      <section class="cx-view" id="cx-view-detail" hidden></section>
+      <section class="cx-view" id="cx-view-network" hidden></section>
+    </div>
+  </div>
+</div>
+
+<script>
+window.CODEX_ASSET_BASE="assets";
+/* ============================================================
+   影神图 · 数据与引擎
+   嵌入时：CHAR_DATA / CH_DATA / PORTRAIT 可改为引用主游戏的
+   SPN / PORTRAIT / UICTX.characterReveals；资源根用 window.CODEX_ASSET_BASE
+   ============================================================ */
+(function(){
+"use strict";
+
+var ASSET = (window.CODEX_ASSET_BASE || "../assets");
+
+/* 章节（进度 1–12） */
+var CH_DATA = [
+  {id:"a1",title:"第一部 · 家族往事"},
+  {id:"a2",title:"第二部 · 意外的聚会"},
+  {id:"a3",title:"第三部 · 感官者"},
+  {id:"a4",title:"第四部 · 刺痛"},
+  {id:"a5",title:"第五部 · 叛逆与宗教大法官"},
+  {id:"a6",title:"第六部 · 俄罗斯修士"},
+  {id:"a7",title:"第七部 · 阿辽沙"},
+  {id:"a8",title:"第八部 · 米嘉"},
+  {id:"a9",title:"第九部 · 预审"},
+  {id:"a10",title:"第十部 · 男孩们"},
+  {id:"a11",title:"第十一部 · 伊万"},
+  {id:"a12",title:"第十二部 · 审判与尾声"}
+];
+
+/* 头像定位（来自 portrait-faces.json），src 相对资源根 */
+var PORTRAIT = {
+  alyosha:  {src:"comic/alyosha.jpg", pos:"46% 38%"},
+  dmitri:   {src:"comic/dmitri.jpg", pos:"50% 35%"},
+  fyodor:   {src:"comic/fyodor.jpg", pos:"52% 38%"},
+  ivan:     {src:"comic/ivan.jpg", pos:"50% 38%"},
+  khokhlakov:{src:"comic/khokhlakov.jpg", pos:"48% 35%"},
+  lise:     {src:"comic/lise.jpg", pos:"52% 35%"},
+  miusov:   {src:"comic/miusov.jpg", pos:"50% 42%"},
+  zosima:   {src:"comic/zosima.jpg", pos:"52% 38%"},
+  snegiryov:{src:"comic/full/captain_snegiryov.jpg", pos:"50% 35%"},
+  fetyukovitch:{src:"comic/full/defense_fetyukovitch.jpg", pos:"50% 38%"},
+  devil:    {src:"comic/full/devil_projection.jpg", pos:"50% 35%"},
+  grigory:  {src:"comic/full/grigory.jpg", pos:"50% 40%"},
+  grushenka:{src:"comic/full/grushenka.jpg", pos:"50% 38%"},
+  ilyusha:  {src:"comic/full/ilyusha.jpg", pos:"50% 38%"},
+  kalganov: {src:"comic/full/kalganov.jpg", pos:"50% 42%"},
+  katerina: {src:"comic/full/katerina.jpg", pos:"50% 40%"},
+  krassotkin:{src:"comic/full/kolya.jpg", pos:"50% 38%"},
+  librarian:{src:"comic/full/librarian.jpg", pos:"50% 40%"},
+  marfa:    {src:"comic/full/marfa.jpg", pos:"50% 40%"},
+  maximov:  {src:"comic/full/maximov.jpg", pos:"50% 42%"},
+  nikolay_parfenovitch:{src:"comic/full/nikolay_parfenovitch.jpg", pos:"50% 42%"},
+  peasant:  {src:"comic/full/peasant.jpg", pos:"50% 42%"},
+  perhotin: {src:"comic/full/perhotin.jpg", pos:"50% 42%"},
+  kirillovitch:{src:"comic/full/prosecutor_ippolit.jpg", pos:"50% 40%"},
+  rakitin:  {src:"comic/full/rakitin.jpg", pos:"50% 42%"},
+  samsonov: {src:"comic/full/samsonov.jpg", pos:"50% 45%"},
+  smerdyakov:{src:"comic/full/smerdyakov.jpg", pos:"50% 38%"}
+};
+
+/* 人物档案（文案来自 story-extras.json；姓名严格取自 name-canon.json）
+   short=卡片/节点用短名；formal=详情页正式名 */
+var CHAR_DATA = [
+ {id:"alyosha",short:"阿辽沙",formal:"阿辽沙",title:"见习修士",faction:"卡拉马佐夫家",
+  first:"家中第三子，修道院的年轻修士。",
+  bio:[[1,"长老屋里一场风波，他垂首陪在一旁，眼看父兄当众撕破脸，又眼看长老伏地向长兄深深一拜，心里又酸又暖。"],
+       [2,"长老遗体没有散香，他的信心里裂开一道缝；一夜迦拿的梦后，他擦干眼泪，决定走到人中间去。"],
+       [10,"他为被围攻的小学童出头，走进赤贫的上尉家，把一个孩子的仇看成了自己的责任，从此一路跟到底。"]],
+  bonds:[[1,"zosima","师徒","faith"],[3,"dmitri","兄弟","family"],[5,"ivan","兄弟","family"],
+         [4,"ilyusha","守护","faith"],[10,"snegiryov","许诺","faith"],[7,"grushenka","忘年","faith"],
+         [12,"krassotkin","和解","faith"]]},
+ {id:"dmitri",short:"米嘉",formal:"德米特里",title:"退伍军官",faction:"卡拉马佐夫家",
+  first:"长子米嘉，为讨遗产回到父亲家。",
+  bio:[[1,"长子米嘉，三岁被母亲抛下，由老仆人格里戈里一勺一口喂大。他辗转军校、高加索，为人决斗降职。"],
+       [2,"他闯进修道院，当众喊父亲是荒唐小丑；长老忽然伏地一拜，把这个火烧火燎的人当场击溃。"],
+       [3,"他为三千卢布发疯，在父亲、未婚妻与格鲁申卡之间来回撕扯，骄傲与下作搅在一处，不得安宁。"],
+       [8,"他连夜筹款不成，翻过父亲家的矮墙，一研杵把老仆打倒，揣着换开的零钱，直奔莫克罗耶。"]],
+  bonds:[[1,"fyodor","父子","conflict_case"],[3,"katerina","未婚","love_money"],
+         [3,"grushenka","爱恋","love_money"],[3,"alyosha","兄弟","family"],[8,"grigory","冲突","conflict_case"]]},
+ {id:"ivan",short:"伊万",formal:"伊万",title:"法学院学生",faction:"卡拉马佐夫家",
+  first:"次子伊万，席间谈教会与国家。",
+  bio:[[2,"次子伊万，冷静骄傲，席间就教会与国家的权限侃侃而谈，句句克制，句句逼人，满座没人接得住。"],
+       [5,"他把夜谈推到极处：我没法爱邻居，我把这个世界原样退回给他。又借宗教大法官之口，讲完那首长诗。"],
+       [11,"父亲死后他病倒，三访厨子，终于听见他最怕的那句话；高烧里看见心魔，承认自己曾盼父亲死。"]],
+  bonds:[[5,"alyosha","兄弟","family"],[11,"smerdyakov","对峙","conflict_case"],
+         [11,"devil","心象","conflict_case"],[2,"fyodor","父子","family"]]},
+ {id:"fyodor",short:"费奥多尔",formal:"费奥多尔·巴甫洛维奇",title:"破落地主",faction:"卡拉马佐夫家",
+  first:"小城破落地主，三个儿子的荒唐父亲。",
+  bio:[[1,"破落地主，白手攒下十万卢布，却一辈子爱出丑。两度丧妻，三个儿子几乎一个都没放在心上。"],
+       [2,"他在修道院席间扮丑，拿玩笑顶撞米乌索夫，又当众编排两个儿子，把满堂人都得罪尽了。"],
+       [3,"他竟与亲儿子争同一个女人，备好三千卢布只等格鲁申卡点头，把父子的脸面踩在脚下也不自知。"]],
+  bonds:[[1,"dmitri","父子","conflict_case"],[3,"grushenka","争恋","love_money"],
+         [2,"ivan","父子","family"],[1,"grigory","主仆","family"],[3,"smerdyakov","主仆","conflict_case"]]},
+ {id:"grigory",short:"格里戈里",formal:"格里戈里",title:"老仆",faction:"卡拉马佐夫家",
+  first:"老仆人，从小把米嘉喂大。",
+  bio:[[1,"费奥多尔家的老仆，本分守拙，是他把三岁的米嘉抱回下房小屋，一勺一口喂大，守着这个荒唐东家。"],
+       [8,"那一夜他在花园守夜，扑出来抱住逃院的米嘉，高喊他杀父的孽种，被一研杵打倒在草丛里。"]],
+  bonds:[[1,"fyodor","主仆","family"],[8,"dmitri","擒逃","conflict_case"],[3,"marfa","夫妻","family"]]},
+ {id:"marfa",short:"玛尔法",formal:"玛尔法",title:"仆妇",faction:"卡拉马佐夫家",
+  first:"老仆人格里戈里的妻子。",
+  bio:[[3,"格里戈里的妻子，与丈夫一道守着费奥多尔家的下房，寡言本分，只把下房的小屋收拾干净。"]],
+  bonds:[[3,"grigory","夫妻","family"],[3,"smerdyakov","同宅","family"]]},
+ {id:"smerdyakov",short:"斯乜尔佳科夫",formal:"斯乜尔佳科夫",title:"年轻厨子",faction:"卡拉马佐夫家",
+  first:"费奥多尔家的年轻厨子。",
+  bio:[[3,"费奥多尔家的年轻厨子，脸黄显老，有癫痫；城里早传他是那个冻死在围墙上的女人的儿子。"],
+       [5,"他在伊万耳边低声撺掇：这样的好差事，您干嘛不去？老爷正盼着您出门呢。话里有话，句句藏针。"],
+       [11,"他先装病、再反咬，最后在第三次对质里摊了牌，那卷三千卢布就摆在桌上，是父亲的买命钱。"]],
+  bonds:[[5,"ivan","撺掇","conflict_case"],[3,"fyodor","主仆","family"],[3,"grigory","同宅","family"]]},
+
+ {id:"zosima",short:"佐西马",formal:"佐西马长老",title:"长老",faction:"修道院",
+  first:"修道院里受人敬重的老长老。",
+  bio:[[1,"城中德高望重的长老，小屋低矮，圣像前油灯长明。初见阿辽沙，就说这年轻人心里装着光。"],
+       [2,"他先走向门廊下受苦的农妇，把圣带按上她的额头；又在满堂哗然时，直直向米嘉额头贴地一拜。"],
+       [4,"他病榻领终傅，静静听贵妇忏悔，不急着答话，也不评判，只把目光温和地落到来人身上。"],
+       [6,"他追述从军与决斗的一生，留下一句话：为一切人、一切事，你都是有罪的；不停歇地爱。"]],
+  bonds:[[1,"alyosha","师徒","faith"],[2,"dmitri","怜悯","faith"],
+         [2,"khokhlakov","祝福","faith"],[2,"peasant","祝福","faith"]]},
+ {id:"librarian",short:"修士",formal:"修士/执事",title:"修士执事",faction:"修道院",
+  first:"席间传话的修士执事。",
+  bio:[[2,"修士室的执事，席间提起伊万那篇谈教会法庭权限的文章，为两位老爷的争论递了个话头。"]],
+  bonds:[[2,"ivan","转述","faith"]]},
+ {id:"rakitin",short:"拉基金",formal:"拉基金",title:"势利的同学",faction:"修道院",
+  first:"嘴上不饶人的见习修士。",
+  bio:[[7,"见习修士拉基金，机灵、嘴上不饶人，看见阿辽沙失了倚靠，立刻上来拉他下山，去看一场热闹。"]],
+  bonds:[[7,"alyosha","同学","faith"],[7,"grushenka","牵线","love_money"]]},
+
+ {id:"peasant",short:"农妇",formal:"农妇",title:"求告的农妇",faction:"女性与情感",
+  first:"门廊下求告的农妇。",
+  bio:[[2,"门廊下抽搐着被领上来的农妇，为死去的孩子求一句宽心话；长老把圣带按上她额头，她渐渐静了。"]],
+  bonds:[[2,"zosima","求慰","faith"]]},
+ {id:"khokhlakov",short:"霍赫拉科娃",formal:"霍赫拉科娃夫人",title:"孀居贵妇",faction:"女性与情感",
+  first:"携病女儿来求见长老的贵妇。",
+  bio:[[2,"霍赫拉科娃夫人，守着坐轮椅的女儿，爱人民却信心薄弱，总向长老说自己心里总是不踏实。"]],
+  bonds:[[2,"lise","母女","family"],[2,"zosima","求问","faith"]]},
+ {id:"lise",short:"莉兹",formal:"莉兹",title:"轮椅少女",faction:"女性与情感",
+  first:"轮椅上爱笑的小姑娘。",
+  bio:[[2,"霍赫拉科娃的女儿莉兹，半瘫在轮椅上，一双大眼睛骨碌碌转，当众笑得直不起腰，忙拿手挡住脸。"],
+       [4,"她把一张折好的纸条偷偷塞进阿辽沙手里，要他等自己走了再看，少女的心事初露端倪，让他心里一紧。"]],
+  bonds:[[2,"khokhlakov","母女","family"],[4,"alyosha","暧昧","love_money"]]},
+ {id:"grushenka",short:"格鲁申卡",formal:"格鲁申卡",title:"本地富孀",faction:"女性与情感",
+  first:"父子二人争夺的本地富孀。",
+  bio:[[3,"全城都知道，费奥多尔父子如今争的是同一个女人——本地富孀格鲁申卡。她在两头钓，不急着拿定主意。"],
+       [7,"听完阿辽沙的心事，她没再笑，从碟子里拿一颗核桃塞进年轻修士手里，说自己也不是完全坏透。"],
+       [8,"莫克罗耶的夜里，她坐在波兰客人身边，穿着好裙子，眼神却一直往门口瞟，等那个追来的人。"]],
+  bonds:[[3,"dmitri","爱恋","love_money"],[3,"fyodor","周旋","love_money"],[7,"alyosha","柔软","faith"]]},
+ {id:"katerina",short:"卡捷琳娜",formal:"卡捷琳娜·伊万诺芙娜",title:"骄傲的未婚妻",faction:"女性与情感",
+  first:"米嘉的未婚妻，骄傲而受伤。",
+  bio:[[3,"她本是上校的女儿，受了米嘉的羞辱却把找零原样退回，骄傲自矜；如今当面把钱掷回他脚边。"],
+       [9,"那三千卢布的来历绕着她转：是她托米嘉转交的钱，一夜挥霍后，成了预审桌上说不清的谜。"],
+       [12,"法庭上她呈上米嘉亲笔那封信，信里白纸黑字写着要杀父亲抢钱；旁听席一片嗡嗡，被告席上的米嘉浑身发抖。"]],
+  bonds:[[3,"dmitri","未婚","love_money"],[11,"ivan","牵挂","family"]]},
+
+ {id:"miusov",short:"米乌索夫",formal:"米乌索夫",title:"远亲·自由派",faction:"城中众生",
+  first:"米嘉的远亲监护人，从巴黎回来。",
+  bio:[[2,"远亲米乌索夫从巴黎回来，顺口做了米嘉的监护人，转头又把孩子忘了；这回到修道院，满心是体面与不耐烦。"]],
+  bonds:[[2,"kalganov","亲戚","family"],[2,"fyodor","冲突","conflict_case"]]},
+ {id:"kalganov",short:"卡尔加诺夫",formal:"卡尔加诺夫",title:"年轻亲戚",faction:"城中众生",
+  first:"米乌索夫的年轻亲戚，一路同行。",
+  bio:[[2,"米乌索夫的年轻亲戚卡尔加诺夫，一路上患得患失，拿不定主意要不要出国念书，遇事先脸红退让。"]],
+  bonds:[[2,"miusov","亲戚","family"]]},
+ {id:"maximov",short:"马克西莫夫",formal:"马克西莫夫",title:"落魄小地主",faction:"城中众生",
+  first:"图拉来的小地主，自来熟。",
+  bio:[[2,"图拉来的小地主马克西莫夫，凑上来热络地给众人带路，像在谁家讨一口饭吃，自己并不觉得难堪。"]],
+  bonds:[[2,"miusov","同路","family"]]},
+ {id:"snegiryov",short:"斯涅吉辽夫",formal:"斯涅吉辽夫上尉",title:"落魄上尉",faction:"城中众生",
+  first:"被米嘉当众羞辱的落魄上尉。",
+  bio:[[4,"斯涅吉辽夫上尉，被米嘉当街揪住胡子拖过；阿辽沙送来的两张钞票，被他一把揉烂摔在地上。"],
+       [10,"破屋里他窘迫得抬不起头，儿子因为替他出头一病不起；他嘴上还学着老喜剧里的话请坐。"]],
+  bonds:[[10,"ilyusha","父子","family"],[10,"alyosha","许诺","faith"],[4,"dmitri","受辱","conflict_case"]]},
+ {id:"ilyusha",short:"伊柳沙",formal:"伊柳沙",title:"受欺的小学生",faction:"城中众生",
+  first:"上尉的儿子，躲在父亲身后。",
+  bio:[[4,"躲在父亲腿后的瘦小孩，死死瞪着阿辽沙；父亲被当众羞辱那一幕，从此深深埋进了他心里。"],
+       [10,"他因为父亲受辱一病不起，见阿辽沙来便扭过脸去；直到最好的朋友握住他的手，他才喘上气。"]],
+  bonds:[[10,"snegiryov","父子","family"],[4,"alyosha","敌意","faith"],[10,"krassotkin","友谊","family"]]},
+ {id:"krassotkin",short:"科利亚",formal:"科利亚·克拉索特金",title:"自负的小学生",faction:"城中众生",
+  first:"全校最自负的小学生科利亚。",
+  bio:[[10,"十三岁的科利亚·克拉索特金，训出一条会装死的狗佩列兹旺，张口政治闭口科学，其实还是个孩子。"]],
+  bonds:[[10,"ilyusha","友谊","family"],[12,"alyosha","和解","faith"]]},
+ {id:"samsonov",short:"萨姆索诺夫",formal:"库兹马·萨姆索诺夫",title:"老商人",faction:"城中众生",
+  first:"米嘉登门求款的老商人。",
+  bio:[[8,"老商人萨姆索诺夫，高宅厚家具；米嘉登门求三千卢布，他不借，倒把人支去了几十里外的庄子。"]],
+  bonds:[[8,"dmitri","回绝","conflict_case"]]},
+ {id:"perhotin",short:"彼尔霍金",formal:"彼尔霍金",title:"青年官员",faction:"城中众生",
+  first:"半夜撞见米嘉的青年官员。",
+  bio:[[8,"小城年轻官员彼尔霍金，半夜看见米嘉一身血走进来换零钱，不动声色，心里却咯噔一下。"]],
+  bonds:[[8,"dmitri","生疑","conflict_case"]]},
+
+ {id:"kirillovitch",short:"检察官",formal:"伊波利特·基里洛维奇",title:"检察官",faction:"司法与审判",
+  first:"带法警闯进门的检察官。",
+  bio:[[9,"县检察官伊波利特·基里洛维奇，预审桌上第一个发问：那三千卢布，一夜之间到底花到哪儿去了？"],
+       [12,"法庭上他把全城各色人等一一画成漫画，最后收在三驾马车的比喻里，旁听席听得入了神。"]],
+  bonds:[[9,"dmitri","公诉","conflict_case"],[12,"fetyukovitch","对峙","conflict_case"]]},
+ {id:"nikolay_parfenovitch",short:"预审推事",formal:"尼古拉·帕尔菲诺维奇",title:"预审推事",faction:"司法与审判",
+  first:"连夜审讯米嘉的预审推事。",
+  bio:[[9,"预审推事尼古拉·帕尔菲诺维奇，连夜擦干净长桌摊开笔录，一层一层问下去，不动声色。"]],
+  bonds:[[9,"dmitri","审讯","conflict_case"]]},
+ {id:"fetyukovitch",short:"费久科维奇",formal:"费久科维奇律师",title:"名辩护律师",faction:"司法与审判",
+  first:"远道而来的辩护律师。",
+  bio:[[12,"从彼得堡请来的名律师费久科维奇，庭上只问一句：那三千卢布，真的存在过吗？谁亲眼见过？"]],
+  bonds:[[12,"dmitri","辩护","conflict_case"],[12,"kirillovitch","对峙","conflict_case"]]},
+
+ {id:"devil",short:"魔鬼",formal:"魔鬼（伊万幻象）",title:"伊万的心象",faction:"伊万的心象",
+  first:"伊万病中看见的小客人。",
+  bio:[[11,"伊万高烧的夜里，一个穿黄褐色外套的小绅士敲门进来做客——他就是伊万自己心里那个又俗气又琐碎的鬼。"]],
+  bonds:[[11,"ivan","心象","conflict_case"]]}
+];
+
+var FACTION_ORDER = ["卡拉马佐夫家","修道院","女性与情感","城中众生","司法与审判","伊万的心象"];
+var FEATURED = {"卡拉马佐夫家":1};
+var BOND_COLOR = {family:"var(--cx-f-family)", love_money:"var(--cx-f-love)",
+                  faith:"var(--cx-f-faith)", conflict_case:"var(--cx-f-conflict)"};
+var BOND_COLOR_HEX = {family:"#b08a4e", love_money:"#9c4048",
+                      faith:"#7e9cb0", conflict_case:"#b0653a"};
+var CH_BY_ID = {}; CHAR_DATA.forEach(function(c){CH_BY_ID[c.id]=c;});
+
+/* ---------- 状态 ---------- */
+var S = {
+  open:false, arc:2, met:{},       // met: id->true
+  view:"gallery", stack:[],        // 详情浏览栈
+  netFocus:null, netT:{x:0,y:0,k:1}
+};
+
+function arcLeq(minArc){ return minArc <= S.arc; }
+function isMet(id){ return !!S.met[id]; }
+function bondUnlocked(c, b){ return arcLeq(b[0]) && isMet(c.id) && isMet(b[1]); }
+
+/* ---------- 工具 ---------- */
+function el(tag, cls, html){
+  var d=document.createElement(tag);
+  if(cls)d.className=cls;
+  if(html!=null)d.innerHTML=html;
+  return d;
+}
+function portraitURL(id){ return ASSET + "/" + PORTRAIT[id].src; }
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+/* ================= 渲染：画廊 ================= */
+function renderGallery(){
+  var box=document.getElementById("cx-view-gallery");
+  box.innerHTML="";
+  var metN=0;
+  FACTION_ORDER.forEach(function(fa){
+    var group=el("div","cx-group");
+    var head=el("div","cx-group-head",
+      '<span class="cx-group-name">'+esc(fa)+"</span>");
+    group.appendChild(head);
+    var cards=el("div","cx-cards");
+    CHAR_DATA.forEach(function(c){
+      if(c.faction!==fa)return;
+      var met=isMet(c.id); if(met)metN++;
+      var card=el("div","cx-card"+(FEATURED[fa]?" is-featured":"")+(met?"":" is-locked"));
+      var fig;
+      if(met){
+        fig='<div class="cx-card-fig"><img src="'+esc(portraitURL(c.id))+
+            '" style="object-position:'+PORTRAIT[c.id].pos+'" alt=""></div>'+
+            '<div class="cx-card-meta"><div class="cx-card-name">'+esc(c.short)+
+            '</div><div class="cx-card-title">'+esc(c.title)+"</div></div>";
+      }else{
+        fig='<div class="cx-card-fig"><div class="cx-silhouette"><span class="qm">？</span>'+
+            '<span class="lbl">尚未结识</span></div></div>';
+      }
+      card.innerHTML=fig;
+      if(met)card.addEventListener("click",function(){openCharDetail(c.id);});
+      cards.appendChild(card);
+    });
+    group.appendChild(cards);
+    box.appendChild(group);
+  });
+  document.getElementById("cx-met-n").textContent=metN;
+}
+
+/* ================= 渲染：详情 ================= */
+function renderDetail(){
+  var box=document.getElementById("cx-view-detail");
+  var id=S.stack[S.stack.length-1];
+  var c=CH_BY_ID[id]; if(!c)return;
+  box.innerHTML="";
+
+  var back=el("button","cx-btn cx-detail-back","← "+(S.stack.length>1?"返回「"+esc(CH_BY_ID[S.stack[S.stack.length-2]].short)+"」":"返回图鉴"));
+  back.addEventListener("click",function(){
+    if(S.stack.length>1){S.stack.pop();renderDetail();}
+    else showView("gallery");
+  });
+
+  var grid=el("div","cx-detail-grid");
+
+  /* 左：画框大肖像 */
+  var frame=el("div","cx-frame");
+  frame.innerHTML=
+    '<div class="cx-frame-portrait"><img src="'+esc(portraitURL(id))+
+    '" style="object-position:'+PORTRAIT[id].pos+'" alt=""></div>'+
+    '<img class="cx-frame-orn" src="'+ASSET+'/ui/frame_ornate.png" alt="">';
+
+  /* 右：信息 + 小传 */
+  var info=el("div","cx-info");
+  var bioHtml="";
+  c.bio.forEach(function(b){
+    if(arcLeq(b[0])){ bioHtml+="<p>"+esc(b[1])+"</p>"; }
+    else{ bioHtml+='<p class="lock"><span>继续阅读以解锁</span></p>'; }
+  });
+  info.innerHTML=
+    '<div class="cx-info-name">'+esc(c.formal)+"</div>"+
+    '<span class="cx-info-title">'+esc(c.title)+"</span>"+
+    '<p class="cx-info-first">'+esc(c.first)+"</p>"+
+    '<div class="cx-bio"><h4>小　传</h4>'+bioHtml+"</div>";
+
+  /* 羁绊环 */
+  var ringWrap=el("div","cx-bonds");
+  ringWrap.innerHTML="<h4>羁　绊</h4>";
+  var unlocked=c.bonds.filter(function(b){return bondUnlocked(c,b);});
+  if(unlocked.length===0){
+    ringWrap.appendChild(el("div","cx-bonds-empty","—— 尚未显现的羁绊 ——"));
+  }else{
+    var ring=el("div","cx-ring");
+    var svg='<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">';
+    var n=unlocked.length, R=33;
+    var pts=unlocked.map(function(b,i){
+      var ang=-Math.PI/2 + i*2*Math.PI/n;
+      return {b:b, x:50+R*Math.cos(ang), y:50+R*Math.sin(ang)};
+    });
+    pts.forEach(function(p){
+      svg+='<path d="M50 50 Q'+((50+p.x)/2)+" "+((50+p.y)/2-4)+' '+p.x+" "+p.y+
+           '" stroke="'+BOND_COLOR_HEX[p.b[3]]+'" stroke-width="1.2" fill="none" opacity=".8"/>';
+    });
+    svg+="</svg>";
+    ring.innerHTML=svg;
+    // 中心节点
+    var center=el("button","cx-node cx-node-center");
+    center.style.left="50%";center.style.top="50%";
+    center.innerHTML='<span class="av" style="width:56px;height:56px"><img src="'+
+      esc(portraitURL(id))+'" style="object-position:'+PORTRAIT[id].pos+'"></span>';
+    ring.appendChild(center);
+    // 卫星节点
+    pts.forEach(function(p){
+      var other=CH_BY_ID[p.b[1]];
+      var nd=el("button","cx-node");
+      nd.style.left=p.x+"%";nd.style.top=p.y+"%";
+      var avSize= n>5?40:46;
+      nd.innerHTML='<span class="av" style="width:'+avSize+'px;height:'+avSize+'px"><img src="'+
+        esc(portraitURL(other.id))+'" style="object-position:'+PORTRAIT[other.id].pos+'"></span>'+
+        '<span class="nm"><b>'+esc(other.short)+'</b><i style="color:'+BOND_COLOR_HEX[p.b[3]]+'">'+esc(p.b[2])+"</i></span>";
+      nd.addEventListener("click",function(){openCharDetail(other.id);});
+      ring.appendChild(nd);
+    });
+    ringWrap.appendChild(ring);
+  }
+  info.appendChild(ringWrap);
+
+  grid.appendChild(frame);
+  grid.appendChild(info);
+  box.appendChild(back);
+  box.appendChild(grid);
+  box.scrollTop=0;
+}
+function angOf(p){ return Math.atan2(p.y-50,p.x-50); }
+
+/* ================= 渲染：关系网 ================= */
+var NET_W=1200, NET_H=760;
+function buildNetworkData(){
+  // 分区行布局
+  var bands=FACTION_ORDER.map(function(fa){
+    var chars=CHAR_DATA.filter(function(c){return c.faction===fa;});
+    return {fa:fa, chars:chars};
+  }).filter(function(b){return b.chars.some(function(c){return isMet(c.id);});});
+  var rowH=NET_H/(bands.length+1);
+  var nodes={};
+  var bandIds=bands.map(function(b){return b.chars.filter(function(c){return isMet(c.id);}).map(function(c){return c.id;});});
+  // 边（去重，未解锁不画）先建表，供排序用
+  var seen={}, edges=[];
+  CHAR_DATA.forEach(function(c){
+    c.bonds.forEach(function(b){
+      if(!bondUnlocked(c,b))return;
+      var key=[c.id,b[1]].sort().join("|");
+      if(seen[key])return; seen[key]=1;
+      edges.push({a:c.id,b:b[1],label:b[2],type:b[3]});
+    });
+  });
+  var adj={};
+  bandIds.forEach(function(m){m.forEach(function(id){adj[id]=[];});});
+  edges.forEach(function(e){
+    if(adj[e.a]&&adj[e.b]){adj[e.a].push(e.b);adj[e.b].push(e.a);}
+  });
+  function place(){
+    bandIds.forEach(function(m,bi){
+      var n=m.length;
+      m.forEach(function(id,i){
+        nodes[id]={id:id, x:(n===1?NET_W/2:90+(NET_W-180)*(i/(n-1))), y:rowH*(bi+1), faction:bands[bi].fa};
+      });
+    });
+  }
+  function meanX(id){
+    var xs=adj[id].map(function(o){return nodes[o]?nodes[o].x:null;}).filter(function(v){return v!=null;});
+    return xs.length? xs.reduce(function(a,b){return a+b;},0)/xs.length : null;
+  }
+  place();
+  // barycenter 扫掠排序，减少连线交叉
+  for(var it=0; it<10; it++){
+    for(var bi=1; bi<bandIds.length; bi++){
+      bandIds[bi].sort(function(a,b){
+        var ma=meanX(a), mb=meanX(b);
+        return (ma==null?-1:ma)-(mb==null?-1:mb);
+      });
+    }
+    for(var bi2=bandIds.length-2; bi2>=0; bi2--){
+      bandIds[bi2].sort(function(a,b){
+        var ma=meanX(a), mb=meanX(b);
+        return (ma==null?-1:ma)-(mb==null?-1:mb);
+      });
+    }
+    place();
+  }
+  return {nodes:nodes,edges:edges};
+}
+
+function renderNetwork(){
+  var box=document.getElementById("cx-view-network");
+  box.innerHTML="";
+  var data=buildNetworkData();
+
+  var stage=el("div","cx-network");
+  stage.appendChild(el("div","cx-network-bg"));
+  stage.appendChild(el("div","cx-network-veil"));
+
+  // 图例
+  var legend=el("div","cx-net-legend");
+  [["family","亲缘"],["love_money","爱与钱"],["faith","信仰与善意"],["conflict_case","冲突与案件"]]
+    .forEach(function(kv){
+      legend.innerHTML+='<span><i style="background:'+BOND_COLOR_HEX[kv[0]]+'"></i>'+kv[1]+"</span>";
+    });
+  stage.appendChild(legend);
+
+  var badge=el("div","cx-net-badge","关系网 · 已结识者");
+  stage.appendChild(badge);
+
+  var tb=el("div","cx-net-toolbar");
+  var reset=el("button","cx-btn","复位");
+  reset.addEventListener("click",function(){S.netT={x:0,y:0,k:1};applyNetTransform();S.netFocus=null;paintNetworkHighlight();});
+  var closeFocus=el("button","cx-btn","取消选中");
+  closeFocus.addEventListener("click",function(){S.netFocus=null;paintNetworkHighlight();});
+  tb.appendChild(reset);tb.appendChild(closeFocus);
+  stage.appendChild(tb);
+  stage.appendChild(el("div","cx-net-hint","拖拽平移 · 滚轮 / 双指缩放 · 点击人物查看关联"));
+
+  var wrap=el("div","cx-net-wrap");
+  var svg='<svg class="cx-net-svg" viewBox="0 0 '+NET_W+' '+NET_H+'">';
+  // 分区带 + 区名
+  var seenF={};
+  Object.keys(data.nodes).forEach(function(id){
+    var nd=data.nodes[id];
+    if(seenF[nd.faction])return; seenF[nd.faction]=1;
+    svg+='<line class="cx-net-fband" x1="40" y1="'+nd.y+'" x2="'+(NET_W-40)+'" y2="'+nd.y+'"/>';
+    svg+='<text class="cx-net-fname" x="48" y="'+(nd.y-26)+'">'+esc(nd.faction)+"</text>";
+  });
+  // 边
+  data.edges.forEach(function(e,ei){
+    var A=data.nodes[e.a],B=data.nodes[e.b]; if(!A||!B)return;
+    var mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+    var dx=B.x-A.x, dy=B.y-A.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+    var off=(ei%2?14:-14);
+    var cx=mx+(-dy/len)*off, cy=my+(dx/len)*off;
+    svg+='<path class="cx-net-edge" data-e="'+e.a+"|"+e.b+'" d="M'+A.x+" "+A.y+" Q"+cx+" "+cy+" "+B.x+" "+B.y+
+         '" stroke="'+BOND_COLOR_HEX[e.type]+'"/>';
+    svg+='<text class="cx-net-elabel" data-e="'+e.a+"|"+e.b+'" x="'+mx+'" y="'+(my-4)+'" text-anchor="middle">'+esc(e.label)+"</text>";
+  });
+  // 节点
+  Object.keys(data.nodes).forEach(function(id){
+    var nd=data.nodes[id], c=CH_BY_ID[id];
+    svg+='<g class="cx-net-node" data-id="'+id+'" transform="translate('+nd.x+','+(nd.y+14)+')">'+
+      '<circle r="24" fill="#1c160e" stroke="'+BOND_COLOR_HEX.family+'"/>'+
+      '<defs></defs>'+
+      '<image href="'+esc(portraitURL(id))+'" x="-19" y="-19" width="38" height="38" preserveAspectRatio="xMidYMid slice" clip-path="url(#cc-'+id+')"/>'+
+      '<text class="nm" y="40">'+esc(c.short)+"</text></g>";
+  });
+  svg+="</svg>";
+  wrap.innerHTML=svg;
+  stage.appendChild(wrap);
+  box.appendChild(stage);
+
+  // clip paths（动态加）
+  var defs=svg.querySelector?null:null;
+  var svgEl=wrap.querySelector("svg");
+  var d=document.createElementNS("http://www.w3.org/2000/svg","defs");
+  Object.keys(data.nodes).forEach(function(id){
+    var cp=document.createElementNS("http://www.w3.org/2000/svg","clipPath");
+    cp.setAttribute("id","cc-"+id);
+    var cir=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    cir.setAttribute("r","19");
+    cp.appendChild(cir); d.appendChild(cp);
+  });
+  svgEl.insertBefore(d, svgEl.firstChild);
+
+  // 节点点击
+  wrap.querySelectorAll(".cx-net-node").forEach(function(g){
+    g.addEventListener("click",function(ev){
+      ev.stopPropagation();
+      var id=g.getAttribute("data-id");
+      S.netFocus=(S.netFocus===id)?null:id;
+      paintNetworkHighlight();
+    });
+  });
+  wrap.addEventListener("click",function(){S.netFocus=null;paintNetworkHighlight();});
+
+  // 拖拽平移 + 缩放（移动超过阈值才捕获，避免吞掉节点点击）
+  var drag=null, dragged=false;
+  wrap.addEventListener("pointerdown",function(ev){
+    drag={x:ev.clientX,y:ev.clientY,t:Object.assign({},S.netT),active:false};
+  });
+  wrap.addEventListener("pointermove",function(ev){
+    if(!drag)return;
+    if(!drag.active){
+      if(Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<6)return;
+      drag.active=true; wrap.classList.add("dragging");
+      try{wrap.setPointerCapture(ev.pointerId);}catch(e){}
+    }
+    S.netT.x=drag.t.x+(ev.clientX-drag.x);
+    S.netT.y=drag.t.y+(ev.clientY-drag.y);
+    applyNetTransform();
+  });
+  wrap.addEventListener("pointerup",function(){
+    if(drag&&drag.active)dragged=true;
+    drag=null; wrap.classList.remove("dragging");
+  });
+  wrap.addEventListener("click",function(ev){
+    if(dragged){dragged=false;return;}
+    if(ev.target.closest&&ev.target.closest(".cx-net-node"))return;
+    S.netFocus=null; paintNetworkHighlight();
+  });
+  wrap.addEventListener("wheel",function(ev){
+    ev.preventDefault();
+    var factor=ev.deltaY<0?1.12:1/1.12;
+    S.netT.k=Math.max(.4,Math.min(2.6,S.netT.k*factor));
+    applyNetTransform();
+  },{passive:false});
+  // 双指缩放
+  var pinch=null;
+  wrap.addEventListener("touchstart",function(ev){
+    if(ev.touches.length===2){
+      pinch={d:touchDist(ev),k:S.netT.k};
+    }
+  },{passive:false});
+  wrap.addEventListener("touchmove",function(ev){
+    if(pinch&&ev.touches.length===2){
+      ev.preventDefault();
+      var d=touchDist(ev);
+      S.netT.k=Math.max(.4,Math.min(2.6,pinch.k*d/pinch.d));
+      applyNetTransform();
+    }
+  },{passive:false});
+  wrap.addEventListener("touchend",function(){pinch=null;});
+
+  applyNetTransform();
+  paintNetworkHighlight();
+}
+function touchDist(ev){
+  var a=ev.touches[0],b=ev.touches[1];
+  return Math.sqrt((a.clientX-b.clientX)*(a.clientX-b.clientX)+(a.clientY-b.clientY)*(a.clientY-b.clientY));
+}
+function applyNetTransform(){
+  var svg=document.querySelector("#cx-view-network .cx-net-svg");
+  if(!svg)return;
+  // 以视口中心为缩放原点：translate(NET_W/2,NET_H/2) scale translate back + pan
+  svg.style.transformOrigin="0 0";
+  var k=S.netT.k;
+  svg.style.transform="translate("+S.netT.x+"px,"+S.netT.y+"px) scale("+k+")";
+}
+function paintNetworkHighlight(){
+  var stage=document.querySelector("#cx-view-network .cx-network");
+  if(!stage)return;
+  var f=S.netFocus;
+  stage.classList.toggle("dim",!!f);
+  if(!f)return;
+  // 直接关系人集合
+  var data=buildNetworkData();
+  var adj={}; adj[f]=1;
+  data.edges.forEach(function(e){
+    if(e.a===f)adj[e.b]=1; if(e.b===f)adj[e.a]=1;
+  });
+  stage.querySelectorAll(".cx-net-node").forEach(function(g){
+    g.classList.toggle("hl",!!adj[g.getAttribute("data-id")]);
+  });
+  stage.querySelectorAll(".cx-net-edge,.cx-net-elabel").forEach(function(l){
+    var key=l.getAttribute("data-e");
+    var parts=key.split("|");
+    l.classList.toggle("hl", parts.indexOf(f)>=0);
+  });
+}
+
+/* ================= 视图切换 ================= */
+function showView(v){
+  S.view=v;
+  document.getElementById("cx-view-gallery").hidden = v!=="gallery";
+  document.getElementById("cx-view-detail").hidden  = v!=="detail";
+  document.getElementById("cx-view-network").hidden  = v!=="network";
+  document.getElementById("cx-btn-network").classList.toggle("is-active",v==="network");
+  if(v==="gallery")renderGallery();
+  if(v==="detail")renderDetail();
+  if(v==="network"){S.netFocus=null;renderNetwork();}
+}
+
+/* ================= 对外 API ================= */
+/* openCodex(progressArcIndex 1-12, metSet [id...] / Set, focusId?) */
+window.openCodex=function(arc, metSet, focusId){
+  S.arc=Math.max(1,Math.min(12, arc|0));
+  S.met={};
+  (metSet instanceof Set?Array.from(metSet):(metSet||[])).forEach(function(id){S.met[id]=1;});
+  var n=0; for(var k in S.met)n++;
+  document.getElementById("cx-met-n").textContent=n;
+  S.stack=[]; S.netT={x:0,y:0,k:1}; S.netFocus=null;
+  document.getElementById("codex-root").classList.add("cx-open");
+  document.getElementById("codex-root").setAttribute("aria-hidden","false");
+  if(focusId && S.met[focusId]){ S.stack=[focusId]; showView("detail"); }
+  else showView("gallery");
+};
+window.openCharDetail=function(id){
+  if(!S.met[id])return;
+  if(S.stack[S.stack.length-1]!==id)S.stack.push(id);
+  showView("detail");
+};
+window.openBondNetwork=function(){ showView("network"); };
+window.closeCodex=function(){
+  document.getElementById("codex-root").classList.remove("cx-open");
+  document.getElementById("codex-root").setAttribute("aria-hidden","true");
+};
+
+/* 顶栏按钮 */
+document.getElementById("cx-btn-close").addEventListener("click",window.closeCodex);
+document.getElementById("cx-btn-network").addEventListener("click",function(){
+  if(S.view==="network")showView(S.stack.length?"detail":"gallery");
+  else showView("network");
+});
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape")window.closeCodex();
+});
+
+/* ================= 演示工具条 ================= */
+var arcSlider=document.getElementById("demo-arc");
+var arcTitle=document.getElementById("codex-arc-title");
+function metByProgress(arc){
+  var met={};
+  CH_DATA.forEach(function(ch,i){
+    if(i+1<=arc){
+      // 与 story-extras.chapters.newChars 对齐
+      var news=[
+        ["fyodor","grigory","dmitri","alyosha","zosima"],
+        ["miusov","kalganov","maximov","peasant","khokhlakov","lise","ivan","librarian"],
+        ["grushenka","katerina"],
+        ["snegiryov","ilyusha"],
+        ["smerdyakov"],
+        [],
+        ["rakitin"],
+        ["samsonov","perhotin"],
+        ["kirillovitch","nikolay_parfenovitch"],
+        ["krassotkin"],
+        ["devil"],
+        ["fetyukovitch"]
+      ][i];
+      news.forEach(function(id){met[id]=1;});
+    }
+  });
+  return met;
+}
+function currentMet(){
+  var mode=document.querySelector('input[name=demo-met]:checked').value;
+  var arc=+arcSlider.value;
+  if(mode==="all"){var all={};CHAR_DATA.forEach(function(c){all[c.id]=1;});return all;}
+  return metByProgress(arc);
+}
+function syncDemo(){
+  var arc=+arcSlider.value;
+  arcTitle.textContent=CH_DATA[arc-1].title;
+}
+if(arcSlider){arcSlider.addEventListener("input",syncDemo);}
+document.querySelectorAll('input[name=demo-met]').forEach(function(r){
+  r.addEventListener("change",syncDemo);
+});
+var _demoOpen=document.getElementById("demo-open");
+if(_demoOpen)_demoOpen.addEventListener("click",function(){
+  var met=currentMet();
+  openCodex(+arcSlider.value, Object.keys(met));
+});
+if(typeof syncDemo==="function"&&arcSlider)syncDemo();
+
+/* 演示页初始化：若带 ?focus=dmitri&arc=3&met=all 则自动打开 */
+(function(){
+  var q=new URLSearchParams(location.search);
+  if(q.get("auto")){
+    var arc=+(q.get("arc")||2);
+    arcSlider.value=arc; syncDemo();
+    var met = q.get("met")==="all"?null:currentMet();
+    if(q.get("met")==="all"){var all={};CHAR_DATA.forEach(function(c){all[c.id]=1;});met=all;}
+    openCodex(arc, Object.keys(met||{}), q.get("focus")||undefined);
+  }
+})();
+
+})();
+</script>
+</script>
+</body>
+</html>
