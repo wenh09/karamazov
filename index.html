@@ -224,6 +224,27 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
  #sceneCardInner h2{font-size:23px;letter-spacing:.18em;padding:0 20px;}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;}}
+
+/* ===== 竖屏 ≤600：舞台=16:9 带，对话框在下 ===== */
+@media (max-width:600px){
+  #app{display:flex;flex-direction:column;}
+  #bgLayer{position:relative;flex:none;width:100%;aspect-ratio:16/9;height:auto;}
+  #bgLayer .bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%;}
+  #bgScrim{position:absolute;left:0;right:0;top:0;bottom:auto;height:160%;}
+  #dialogDock{position:relative;left:0;right:0;bottom:auto;flex:1;min-height:0;max-height:none;
+    display:flex;flex-direction:column;padding:18px 14px calc(54px + env(safe-area-inset-bottom,0));}
+  #focus{left:10px;top:-52px;}
+  #nameplate{left:10px;top:-14px;}
+  #text{flex:1;min-height:0;overflow-y:auto;font-size:14px;line-height:1.75;}
+  #dlg.narr #text{font-size:14px;}
+  #btnBar{position:absolute;left:6px;right:6px;bottom:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  #btnBar button{min-width:44px;min-height:44px;font-size:14px;flex:none;}
+  #introStack{position:fixed;top:52px;left:12px;right:12px;width:auto;max-width:none;z-index:20;}
+}
+@media (min-width:601px){
+  #btnBar{flex-direction:row;right:12px;bottom:calc(26vh + 8px);max-width:760px;left:auto;flex-wrap:wrap;}
+  #btnBar button{flex:none;min-width:64px;}
+}
 </style>
 </head>
 <body>
@@ -353,6 +374,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
      <button class="btn" id="mMap">关系图</button>
      <button class="btn" id="mArc">章节选择</button>
      <button class="btn" id="mRestart">重开</button>
+     <button class="btn" id="mTitle">回到标题</button>
    </div>
  </div></div>
 
@@ -702,14 +724,20 @@ if($("peopleBtn"))$("peopleBtn").onclick=function(e){e.stopPropagation();closeMe
 $("progBtn").onclick=function(){closeMenu();stopAuto();$("menuOv").classList.add("open");};
 document.querySelectorAll(".pTab").forEach(function(t){t.onclick=function(){var to=t.dataset.tab;if(to==="map"&&!$("mapOv").classList.contains("open")){$("codexOv").classList.remove("open");openRelationMap();}else if(to==="codex"&&!$("codexOv").classList.contains("open")){$("mapOv").classList.remove("open");openCodex();}};});
 $("mRestart").onclick=function(){closeMenu();if(confirm("重开将仅清空本作品存档并回到开头，确定？")){stopAuto();clearSave();startFresh();}};
+$("mTitle").onclick=function(){closeMenu();stopAuto();refreshTitleMenu();document.body.classList.add("intro");$("entryOv").classList.add("open");};
 $("startBtn").onclick=function(){clearSave();startFresh();if(window.STORY_EXTRAS&&STORY_EXTRAS.hook)showHook(STORY_EXTRAS.hook);};
 $("continueBtn").onclick=continueFromSave;
 $("endRestart").onclick=function(){clearSave();$("endOv").classList.remove("open");startFresh();};
 document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(x.dataset.close).classList.remove("open");};});
 
+function refreshTitleMenu(){var o=loadSave();
+ $("continueBtn").disabled=!(o&&!o.ended);$("continueBtn").style.opacity=(o&&!o.ended)?"1":".4";
+ var mc=$("mCodexTitle");if(mc){var has=!!o;mc.disabled=!has;mc.style.opacity=has?"1":".4";mc.style.cursor=has?"pointer":"not-allowed";}
+}
+refreshTitleMenu();
 (function(){var o=loadSave();
  $("totalMin").textContent=fmtMin(totalSec());
- $("continueBtn").disabled=!(o&&!o.ended);$("continueBtn").style.opacity=(o&&!o.ended)?"1":".4";
+ refreshTitleMenu();
  showBg(bgFile(BEATS[0].bg));
 })();
 
@@ -839,7 +867,7 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
  ".introCard .ict h4{font-size:16px;color:var(--trim);letter-spacing:.08em;margin-bottom:2px;}",
  ".introCard .ict .ict2{font-size:11px;color:var(--ink-faint);margin-bottom:5px;}",
  ".introCard .ict p{font-size:12px;color:var(--ink-dim);line-height:1.5;}",
- "body.intro #topBtns,body.intro #btnBar,body.intro #topBar{visibility:hidden;}",
+ "body.intro #topBtns,body.intro #btnBar,body.intro #topBar,body.intro #dialogDock,body.intro #prog,body.intro #introStack,body.intro #sceneCard{visibility:hidden;opacity:0;}",
  "#btnBar{left:6px;right:6px;bottom:6px;display:flex;flex-direction:row;justify-content:space-between;gap:4px;}",
  "#btnBar button{flex:1 1 0;min-width:0;padding:8px 2px;font-size:11.5px;border-radius:3px;}",
  "#btnBar button small{display:none;}",
@@ -872,13 +900,52 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
  "#codexCount{font-size:13px;color:var(--ink-dim);}",
  "#progLine{position:absolute;left:0;right:0;top:0;z-index:6;pointer-events:none;text-align:center;font-size:11px;color:var(--ink-faint);letter-spacing:.1em;padding-top:2px;}",
  "@media (max-width:680px){#introStack{right:10px;left:auto;top:88px;max-width:210px;align-items:flex-end;}.introCard{width:210px;}}",
- "@media (prefers-reduced-motion:reduce){.introCard{transition:none;}}"
+ "@media (prefers-reduced-motion:reduce){.introCard{transition:none;}}",
+ "@media (max-width:600px){#app{display:flex;flex-direction:column!important;}",
+ "#topBar{position:relative!important;flex:none!important;height:76px!important;align-items:stretch!important;flex-direction:column!important;padding:6px 12px!important;pointer-events:auto!important;background:rgba(10,13,20,.55)!important;}",
+ "#progLine{position:relative!important;top:auto!important;text-align:left!important;padding:0 0 2px!important;}",
+ "#topBtns{position:absolute!important;top:6px!important;right:6px!important;z-index:9!important;}",
+ "#bgLayer{position:relative!important;flex:none!important;width:100%!important;aspect-ratio:16/9;height:auto!important;}",
+ "#bgLayer .bg-img{object-fit:cover;object-position:center 25%;}",
+ "#stage{position:relative!important;inset:auto!important;flex:1!important;min-height:0!important;display:flex!important;flex-direction:column!important;}",
+ "#dialogDock{position:relative!important;left:0!important;right:0!important;bottom:auto!important;flex:1!important;min-height:0!important;max-height:none!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;grid-template-columns:100%!important;overflow:hidden!important;padding:0!important;background:linear-gradient(180deg,rgba(14,17,25,.95),rgba(10,12,18,.98))!important;}",
+ "#dlgContent{min-height:0;overflow-y:auto;padding:8px 12px 8px;display:flex;flex-direction:column;}",
+ "#focus{position:relative!important;left:0!important;top:0!important;width:auto!important;height:auto!important;display:flex!important;gap:6px!important;align-items:center!important;margin:0 0 4px!important;}",
+ "#focus .ava{width:36px!important;height:48px!important;}",
+ "#focus .fp.target .ava{width:26px!important;height:36px!important;}",
+ "#nameplate{position:relative!important;left:0!important;top:0!important;display:block!important;margin:0 0 4px!important;font-size:13px!important;}",
+ "#introStack{position:relative!important;left:0!important;top:0!important;right:auto!important;width:auto!important;flex:none!important;display:flex!important;flex-direction:row!important;overflow-x:auto!important;gap:6px!important;margin:0 0 4px!important;z-index:5!important;}",
+ "#introStack .introCard{flex:none!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;padding:4px 6px!important;width:auto!important;max-width:100%!important;}",
+ "#introStack .introCard .icp{width:38px!important;height:38px!important;flex:none!important;}",
+ "#introStack .introCard .icp img{width:100%!important;height:100%!important;object-fit:cover;}",
+ "#introStack .introCard .ict{flex:1;min-width:0;}",
+ "#introStack .introCard .ict h4{font-size:14px!important;margin:0 0 1px!important;line-height:1.3;}",
+ "#introStack .introCard .ict .ict2{display:none!important;}",
+ "#introStack .introCard .ict .ictTag{display:none!important;}",
+ "#introStack .introCard .ict p{font-size:14px!important;margin:0;line-height:1.35;}",
+ "#dlg{flex:1;display:flex;flex-direction:column;min-height:80px;}",
+ "#text{flex:1;min-height:80px;overflow-y:auto;font-size:14px!important;line-height:1.75;}",
+ "#dlg.narr #text{font-size:14px!important;}",
+ "#dlg.narr #focus,#dlg.narr #nameplate{display:none!important;}",
+ "#dialogDock:has(#introStack .introCard) #focus{display:none!important;}",
+ "#btnBar{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important;padding:6px!important;flex:none!important;}",
+ "#btnBar button{min-width:44px!important;min-height:48px!important;font-size:14px!important;flex:none!important;padding:6px 2px!important;}",
+ "}"
  ].join("\n");
  document.head.appendChild(st);
 
- // 初登场小卡容器（左侧安全区，可堆叠）
+ // 手机内容滚动容器（桌面不用）
  var stack=document.createElement("div");stack.id="introStack";
- document.getElementById("app").appendChild(stack);
+ var _dlg=document.getElementById("dlg");if(_dlg)_dlg.parentNode.insertBefore(stack,_dlg);else document.getElementById("dialogDock").appendChild(stack);
+ (function(){
+   var dlg=document.getElementById("dialogDock");if(!dlg)return;
+   var wrap=document.createElement("div");wrap.id="dlgContent";
+   var btn=document.getElementById("btnBar");
+   ["focus","nameplate","introStack","dlg"].forEach(function(id){
+     var e=document.getElementById(id);if(e)wrap.appendChild(e);
+   });
+   dlg.appendChild(wrap);
+ })();
 
  var shownIntro={};
  function portSrc(id){var el=document.querySelector('.port-img[data-p="'+id+'"]');return el?el.src:null;}
@@ -892,7 +959,7 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
    c.querySelector(".ict2").textContent=CHAR_TITLE[id]||"";
    var fm=(window.STORY_EXTRAS&&STORY_EXTRAS.firstMeet&&STORY_EXTRAS.firstMeet[id])||CHAR_IDENTITY[id]||"";
    c.querySelector("p").textContent=fm;
-   c.addEventListener("click",function(ev){ev.stopPropagation();openCodex(id);});
+   c.addEventListener("click",function(ev){ev.stopPropagation();openGameCodex(id);});
    var sec=6+Math.min(6,fm.length*0.06);
    var t=setTimeout(function(){c.classList.add("gone");setTimeout(function(){if(c.parentNode)c.remove();},300);},sec*1000);
    c.addEventListener("mouseenter",function(){clearTimeout(t);c._t=null;});
@@ -961,17 +1028,23 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
      },true);
    }
  })();
- ["peopleBtn","peopleBtn2"].forEach(function(id){var el=document.getElementById(id);if(el)el.onclick=function(e){e&&e.stopPropagation&&e.stopPropagation();if(window.stopAuto)stopAuto();if(window.closeMenu)closeMenu();if(typeof openCodex==="function")openCodex(cxProgress(),cxMet());};});
+ // 统一图鉴入口：从当前 state 自算 arc/met，可带焦点人物
+ function openGameCodex(focusId){
+   var arc=cxProgress();var met=cxMet();
+   if(typeof openCodex==="function")openCodex(arc,met,focusId);
+ }
+ ["peopleBtn","peopleBtn2"].forEach(function(id){var el=document.getElementById(id);if(el)el.onclick=function(e){e&&e.stopPropagation&&e.stopPropagation();if(window.stopAuto)stopAuto();if(window.closeMenu)closeMenu();openGameCodex();};});
  // 作品引子 hook（开始后一次，可点跳过）
  window.showHook=function(text){
-   window.__hookOpen=true;
+   window.__hookOpen=true;clearTimeout(window.__scT);
+   var _sc0=document.getElementById("sceneCard");if(_sc0)_sc0.classList.remove("show");
    var d=document.createElement("div");d.id="hookOv";
    d.innerHTML='<div class="hookCard"><div class="hookTxt">'+text+'</div><div class="hookSkip">点击任意处开始阅读</div></div>';
    d.style.cssText="position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(8,10,16,.92) 0%,rgba(8,10,16,.78) 100%);cursor:pointer;";
    d.querySelector(".hookCard").style.cssText="max-width:680px;text-align:center;padding:40px;";
    d.querySelector(".hookTxt").style.cssText="font-family:var(--serif);font-size:24px;line-height:1.9;color:#e8e0cf;letter-spacing:.04em;";
    d.querySelector(".hookSkip").style.cssText="margin-top:26px;font-size:12px;color:#9a937f;letter-spacing:.2em;";
-   d.onclick=function(){window.__hookOpen=false;_lastScene=BEATS[state.idx].sc;$("sceneCard").classList.remove("show");d.remove();};
+   d.onclick=function(){window.__hookOpen=false;var sc=$("sceneCard");if(sc)sc.classList.remove("show");clearTimeout(window.__scT);d.remove();};
    document.body.appendChild(d);
  };
 
