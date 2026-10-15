@@ -30,9 +30,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
 #app.flashback #bgLayer .bg-img.on{filter:sepia(.5) saturate(.7) brightness(.85);}
 #app.dream #bgLayer .bg-img.on{filter:hue-rotate(200deg) saturate(.5) brightness(.8);}
 #app.vision #bgLayer .bg-img.on{filter:contrast(1.15) saturate(.6) brightness(.75);}
-/* 上下压暗，保证对话框可读 */
+/* 上下压暗，保证对话框可读（轻量，不露黑块） */
 #bgScrim{position:absolute;inset:0;pointer-events:none;
- background:linear-gradient(to bottom,rgba(8,10,16,.55) 0%,rgba(8,10,16,0) 22%,rgba(8,10,16,0) 60%,rgba(8,10,16,.55) 100%);}
+ background:linear-gradient(to bottom,rgba(8,10,16,.30) 0%,rgba(8,10,16,0) 18%,rgba(8,10,16,0) 55%,rgba(8,10,16,.45) 100%);}
 
 /* ===== 顶部：地点牌 + 模式角标 ===== */
 #topBar{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;z-index:6;pointer-events:none;}
@@ -194,23 +194,34 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
 #mapDetail button:hover{color:var(--trim);}
 #mapSub{font-size:12px;color:var(--ink-faint);}
 
-/* 场景标题过场 */
+/* 场景标题过场：居中淡入淡出，不遮画面 */
 #sceneCard{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
- background:rgba(6,8,12,.9);text-align:center;}
-#sceneCard.show{display:flex;}
-#sceneCardInner h2{font-size:30px;letter-spacing:.2em;color:var(--ink);}
-#sceneCardInner .scTime{font-size:14px;color:var(--trim);margin-top:8px;letter-spacing:.15em;}
+ background:radial-gradient(ellipse at center,rgba(6,8,12,.55) 0%,rgba(6,8,12,.15) 70%,rgba(6,8,12,0) 100%);
+ pointer-events:none;}
+#sceneCard.show{display:flex;animation:scFade 2.2s ease forwards;}
+#sceneCardInner{text-align:center;}
+#sceneCardInner h2{font-size:30px;letter-spacing:.25em;color:var(--ink);text-shadow:0 2px 12px rgba(0,0,0,.8);font-weight:600;}
+#sceneCardInner .scTime{font-size:13px;color:var(--trim);margin-top:10px;letter-spacing:.3em;}
+@keyframes scFade{0%{opacity:0;}15%{opacity:1;}75%{opacity:1;}100%{opacity:0;}}
 
 /* 竖屏手机：上画面下对话框 */
 @media (max-width:680px){
- #dialogDock{min-height:34vh;padding:30px 14px 12px;}
- #focus .ava{width:64px;height:86px;top:-50px;}
- #focus .fp.target .ava{width:42px;height:58px;}
+ #bgLayer .bg-img{object-position:center 25%;}
+ #dialogDock{min-height:36vh;max-height:46vh;padding:28px 14px 10px;
+  background:linear-gradient(180deg,rgba(14,17,25,.92),rgba(10,12,18,.98));}
+ #focus{left:12px;top:-48px;}
+ #focus .ava{width:58px;height:78px;border-width:2px;}
+ #focus .fp.target .ava{width:40px;height:54px;}
+ #nameplate{left:12px;top:-14px;font-size:12px;}
  #text{font-size:15.5px;line-height:1.85;}
- #btnBar{flex-direction:row;right:8px;left:8px;bottom:calc(34vh + 6px);justify-content:space-between;}
- #btnBar button{min-width:0;flex:1;font-size:10px;}
- #badge{font-size:11px;}
+ #dlg.narr #text{font-size:15px;}
+ #leadNarr,#tailNarr{font-size:12px;}
+ #btnBar{flex-direction:row;right:6px;left:6px;bottom:6px;justify-content:space-between;gap:4px;}
+ #btnBar button{flex:1 1 0;min-width:0;padding:8px 2px;font-size:11.5px;border-radius:3px;}
+ #badge{font-size:11.5px;padding:6px 10px;}
+ #badge .sceneMood{font-size:10.5px;}
  #codexList{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));}
+ #sceneCardInner h2{font-size:23px;letter-spacing:.18em;padding:0 20px;}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;}}
 </style>
@@ -727,6 +738,7 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
  var _lastScene=null;
  var _maybeSceneCard=maybeSceneCard;
  maybeSceneCard=function(b){
+   if(window.__hookOpen) return;
    if(b.sc!==_lastScene){
      _lastScene=b.sc;
      var m=SCENE_META[b.sc]||{};
@@ -828,11 +840,10 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
  ".introCard .ict .ict2{font-size:11px;color:var(--ink-faint);margin-bottom:5px;}",
  ".introCard .ict p{font-size:12px;color:var(--ink-dim);line-height:1.5;}",
  "body.intro #topBtns,body.intro #btnBar,body.intro #topBar{visibility:hidden;}",
- "#btnBar{left:8px;right:8px;bottom:6px;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:5px;}",
- "#btnBar button{flex:0 1 auto;min-width:0;padding:5px 11px;font-size:12px;border-radius:4px;}",
+ "#btnBar{left:6px;right:6px;bottom:6px;display:flex;flex-direction:row;justify-content:space-between;gap:4px;}",
+ "#btnBar button{flex:1 1 0;min-width:0;padding:8px 2px;font-size:11.5px;border-radius:3px;}",
  "#btnBar button small{display:none;}",
- "@media(max-width:560px){#btnBar{bottom:4px;gap:4px;}#btnBar button{padding:5px 8px;font-size:11px;}}",
- "@media(max-width:600px){#btnBar button#autoBtn,#btnBar button#saveBtn,#btnBar button#prevBtn,#btnBar button#progBtn{display:inline-block;}#btnBar button#skipBtn,#btnBar button#logBtn,#btnBar button#loadBtn,#btnBar button#peopleBtn2{display:none;}}",
+ "@media(max-width:560px){#btnBar{bottom:4px;gap:3px;}#btnBar button{padding:7px 1px;font-size:11px;}}",
  "#nameplate{position:relative;}",
  "#nameplate .tgtline{display:inline;font-size:11px;color:var(--ink-dim);font-weight:400;letter-spacing:.03em;margin-left:8px;}",
  "#nameplate .firstTag{position:absolute;top:-8px;right:-14px;font-size:9px;color:#b88735;border:1px solid #b88735;border-radius:3px;padding:0 4px;background:#14161f;}",
@@ -953,13 +964,14 @@ document.querySelectorAll(".closex").forEach(function(x){x.onclick=function(){$(
  ["peopleBtn","peopleBtn2"].forEach(function(id){var el=document.getElementById(id);if(el)el.onclick=function(e){e&&e.stopPropagation&&e.stopPropagation();if(window.stopAuto)stopAuto();if(window.closeMenu)closeMenu();if(typeof openCodex==="function")openCodex(cxProgress(),cxMet());};});
  // 作品引子 hook（开始后一次，可点跳过）
  window.showHook=function(text){
+   window.__hookOpen=true;
    var d=document.createElement("div");d.id="hookOv";
    d.innerHTML='<div class="hookCard"><div class="hookTxt">'+text+'</div><div class="hookSkip">点击任意处开始阅读</div></div>';
-   d.style.cssText="position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(8,10,16,.88);cursor:pointer;";
+   d.style.cssText="position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(8,10,16,.92) 0%,rgba(8,10,16,.78) 100%);cursor:pointer;";
    d.querySelector(".hookCard").style.cssText="max-width:680px;text-align:center;padding:40px;";
    d.querySelector(".hookTxt").style.cssText="font-family:var(--serif);font-size:24px;line-height:1.9;color:#e8e0cf;letter-spacing:.04em;";
    d.querySelector(".hookSkip").style.cssText="margin-top:26px;font-size:12px;color:#9a937f;letter-spacing:.2em;";
-   d.onclick=function(){d.remove();};
+   d.onclick=function(){window.__hookOpen=false;_lastScene=BEATS[state.idx].sc;$("sceneCard").classList.remove("show");d.remove();};
    document.body.appendChild(d);
  };
 
